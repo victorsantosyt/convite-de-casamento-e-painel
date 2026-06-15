@@ -44,7 +44,13 @@ export default async (req) => {
   }
 
   if (req.method === "DELETE") {
-    const id = new URL(req.url).searchParams.get("id");
+    const params = new URL(req.url).searchParams;
+    if (params.get("all") === "true") {
+      const { blobs } = await store.list();
+      await Promise.all(blobs.map((b) => store.delete(b.key)));
+      return json({ ok: true, cleared: blobs.length });
+    }
+    const id = params.get("id");
     if (!id) return json({ error: "id_required" }, 400);
     await store.delete(id);
     return json({ ok: true });
