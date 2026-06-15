@@ -3,11 +3,7 @@
    08 de Agosto de 2026 | Água Boa - MT
    ============================================== */
 
-// ── CONFIGURAÇÃO ─────────────────────────────────
-// Atualize com o número de WhatsApp dos noivos:
-// Formato: 55 + DDD + número (só dígitos, sem espaço)
-// Exemplo: "5566999990000" = Brasil (55) + DDD 66 + número
-const WHATSAPP_NOIVOS = "556698130-9903"; // ← ATUALIZE AQUI
+const WHATSAPP_NOIVOS = "556698130-9903";
 
 const WEDDING_DATE = new Date("2026-08-08T18:00:00");
 const STORAGE_KEYS = { rsvps: "sv_rsvps", contributions: "sv_contributions" };
@@ -116,7 +112,7 @@ function addWhatsAppCTA(name, status) {
 
   const link = document.createElement("a");
   link.id        = "waBtn";
-  link.href      = `https://wa.me/${WHATSAPP_NOIVOS}?text=${encodeURIComponent(msg)}`;
+  link.href      = `https://wa.me/${WHATSAPP_NOIVOS.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`;
   link.target    = "_blank";
   link.rel       = "noopener noreferrer";
   link.className = "btn-whatsapp";
