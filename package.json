@@ -1,0 +1,10 @@
+{
+  "name": "convite-de-casamento-e-painel",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Convite de casamento Stephanny & Victor + painel administrativo",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
