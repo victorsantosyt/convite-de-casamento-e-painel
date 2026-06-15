@@ -1,0 +1,11 @@
+# Configuração do Netlify — Convite de Casamento S&V
+# O site é estático (publish = "."); as funções ficam em netlify/functions
+# e expõem as rotas /api/rsvps e /api/contributions, que gravam e leem os
+# dados no Netlify Blobs (armazenamento compartilhado entre todos os visitantes).
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
