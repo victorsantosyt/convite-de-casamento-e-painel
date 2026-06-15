@@ -436,15 +436,14 @@
       id="pinInput"
       class="pin-input"
       type="password"
-      inputmode="numeric"
-      maxlength="4"
-      placeholder="·  ·  ·  ·"
+      maxlength="32"
+      placeholder="• • • •"
       autocomplete="off"
-      aria-label="PIN de acesso">
+      aria-label="Senha de acesso">
 
     <button class="btn-login" id="loginBtn">Entrar</button>
     <div id="loginError" role="alert"></div>
-    <p class="pin-hint">PIN: data do casamento (4 dígitos)</p>
+    <p class="pin-hint">PIN padrão: data do casamento (0808)</p>
   </div>
 </div>
 
@@ -578,18 +577,36 @@
      Admin Panel — Stephanny & Victor
      ═══════════════════════════════════════════ */
 
-  const PIN = "0808";
-  const KEYS = { rsvps: "sv_rsvps", contributions: "sv_contributions" };
+  const API = { rsvps: "/api/rsvps", contributions: "/api/contributions" };
 
-  // ── Storage helpers ────────────────────────
-  function load(key) {
-    try { return JSON.parse(localStorage.getItem(KEYS[key]) || "[]"); }
-    catch { return []; }
+  // ── Token de acesso ────────────────────────
+  // O painel envia este token no cabeçalho x-admin-token. O servidor o compara
+  // com a variável de ambiente ADMIN_TOKEN (padrão "0808" se não definida).
+  function getToken() { return sessionStorage.getItem("admin_token") || ""; }
+
+  // ── Chamadas à API ─────────────────────────
+  async function apiGet(url) {
+    const res = await fetch(url, { headers: { "x-admin-token": getToken() } });
+    if (res.status === 401) { logout(); throw new Error("unauthorized"); }
+    if (!res.ok) throw new Error(`request_failed_${res.status}`);
+    return res.json();
   }
 
-  function save(key, list) {
-    try { localStorage.setItem(KEYS[key], JSON.stringify(list)); }
-    catch { showToast("Erro ao salvar dados.", "err"); }
+  async function apiPost(url, data) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-token": getToken() },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`request_failed_${res.status}`);
+    return res.json();
+  }
+
+  async function apiDelete(url) {
+    const res = await fetch(url, { method: "DELETE", headers: { "x-admin-token": getToken() } });
+    if (res.status === 401) { logout(); throw new Error("unauthorized"); }
+    if (!res.ok) throw new Error(`request_failed_${res.status}`);
+    return res.json();
   }
 
   // ── Toast ──────────────────────────────────
@@ -608,40 +625,62 @@
   const dashboard   = document.getElementById("dashboard");
   const pinInput    = document.getElementById("pinInput");
   const loginErr    = document.getElementById("loginError");
+  const loginBtn    = document.getElementById("loginBtn");
   let attempts = 0;
 
-  function tryLogin() {
-    const val = pinInput.value.trim();
-    if (val === PIN) {
-      sessionStorage.setItem("admin_auth", "1");
-      loginScreen.style.display = "none";
-      dashboard.style.display   = "block";
-      renderAll();
-    } else {
-      attempts++;
-      loginErr.textContent = attempts >= 3
-        ? "Dica: data do casamento (dia + mes)"
-        : "PIN incorreto. Tente novamente.";
-      pinInput.value = "";
-      pinInput.focus();
-    }
+  function showDashboard() {
+    loginScreen.style.display = "none";
+    dashboard.style.display   = "block";
   }
 
-  document.getElementById("loginBtn").addEventListener("click", tryLogin);
-  pinInput.addEventListener("keydown", (e) => { if (e.key === "Enter") tryLogin(); });
-
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    sessionStorage.removeItem("admin_auth");
+  function logout() {
+    sessionStorage.removeItem("admin_token");
     dashboard.style.display   = "none";
     loginScreen.style.display = "flex";
     pinInput.value = "";
     loginErr.textContent = "";
-  });
+  }
 
-  // Auto-login se sessao ainda ativa
-  if (sessionStorage.getItem("admin_auth") === "1") {
-    loginScreen.style.display = "none";
-    dashboard.style.display   = "block";
+  // Valida o token tentando buscar a lista de convidados no servidor.
+  async function tryLogin() {
+    const val = pinInput.value.trim();
+    if (!val) { pinInput.focus(); return; }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Entrando...";
+    sessionStorage.setItem("admin_token", val);
+
+    try {
+      await apiGet(API.rsvps);          // 200 = token correto
+      loginErr.textContent = "";
+      showDashboard();
+      renderAll();
+    } catch (err) {
+      sessionStorage.removeItem("admin_token");
+      if (err.message === "unauthorized") {
+        attempts++;
+        loginErr.textContent = attempts >= 3
+          ? "Dica: data do casamento (dia + mes)"
+          : "PIN incorreto. Tente novamente.";
+      } else {
+        loginErr.textContent = "Erro de conexao. Tente novamente.";
+      }
+      pinInput.value = "";
+      pinInput.focus();
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Entrar";
+    }
+  }
+
+  loginBtn.addEventListener("click", tryLogin);
+  pinInput.addEventListener("keydown", (e) => { if (e.key === "Enter") tryLogin(); });
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+
+  // Auto-login se ainda houver token na sessao
+  if (getToken()) {
+    showDashboard();
+    renderAll();
   }
 
   // ── Formatar data ──────────────────────────
@@ -666,11 +705,17 @@
   }
 
   // ── Render RSVP ───────────────────────────
-  function renderRSVP() {
-    const list  = load("rsvps");
+  async function renderRSVP() {
     const body  = document.getElementById("rsvpBody");
     const empty = document.getElementById("rsvpEmpty");
     const badge = document.getElementById("rsvpBadge");
+
+    let list;
+    try {
+      ({ rsvps: list } = await apiGet(API.rsvps));
+    } catch {
+      return; // 401 ja faz logout; outros erros sao silenciosos no render
+    }
 
     badge.textContent = list.length;
 
@@ -688,8 +733,7 @@
     }
 
     empty.style.display = "none";
-    body.innerHTML = list.slice().reverse().map((r, i) => {
-      const realIdx = list.length - 1 - i;
+    body.innerHTML = list.slice().reverse().map((r) => {
       const pill = r.status === "accepted"
         ? '<span class="pill pill-green">Confirmado</span>'
         : '<span class="pill pill-red">Recusou</span>';
@@ -699,27 +743,35 @@
         <td>${pill}</td>
         <td style="font-size:.8rem;color:var(--soft)">${fmtDate(r.ts)}</td>
         <td>
-          <button class="btn-del" title="Remover" onclick="removeRSVP(${realIdx})"><i class="ph ph-trash"></i></button>
+          <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
         </td>
       </tr>`;
     }).join("");
   }
 
-  window.removeRSVP = function(idx) {
+  window.removeRSVP = async function(id) {
     if (!confirm("Remover esta confirmacao?")) return;
-    const list = load("rsvps");
-    list.splice(idx, 1);
-    save("rsvps", list);
-    renderAll();
-    showToast("Registro removido.", "ok");
+    try {
+      await apiDelete(`${API.rsvps}?id=${encodeURIComponent(id)}`);
+      await renderAll();
+      showToast("Registro removido.", "ok");
+    } catch {
+      showToast("Erro ao remover. Tente novamente.", "err");
+    }
   };
 
   // ── Render Contribuicoes ──────────────────
-  function renderContribs() {
-    const list  = load("contributions");
+  async function renderContribs() {
     const body  = document.getElementById("contribBody");
     const empty = document.getElementById("contribEmpty");
     const badge = document.getElementById("contribBadge");
+
+    let list;
+    try {
+      ({ contributions: list } = await apiGet(API.contributions));
+    } catch {
+      return; // 401 ja faz logout; outros erros sao silenciosos no render
+    }
 
     badge.textContent = list.length;
     document.getElementById("sContribs").textContent = list.length;
@@ -731,8 +783,7 @@
     }
 
     empty.style.display = "none";
-    body.innerHTML = list.slice().reverse().map((c, i) => {
-      const realIdx = list.length - 1 - i;
+    body.innerHTML = list.slice().reverse().map((c) => {
       const pill = c.type === "pix"
         ? '<span class="pill pill-blue">PIX</span>'
         : '<span class="pill pill-gold">Presente</span>';
@@ -744,23 +795,25 @@
         <td style="color:var(--soft);font-size:.84rem">${esc(desc)}${c.amount && c.description ? " — " + esc(c.amount) : ""}</td>
         <td style="font-size:.8rem;color:var(--soft);white-space:nowrap">${fmtDate(c.ts)}</td>
         <td>
-          <button class="btn-del" title="Remover" onclick="removeContrib(${realIdx})"><i class="ph ph-trash"></i></button>
+          <button class="btn-del" title="Remover" onclick="removeContrib('${esc(c.id)}')"><i class="ph ph-trash"></i></button>
         </td>
       </tr>`;
     }).join("");
   }
 
-  window.removeContrib = function(idx) {
+  window.removeContrib = async function(id) {
     if (!confirm("Remover esta contribuicao?")) return;
-    const list = load("contributions");
-    list.splice(idx, 1);
-    save("contributions", list);
-    renderAll();
-    showToast("Contribuicao removida.", "ok");
+    try {
+      await apiDelete(`${API.contributions}?id=${encodeURIComponent(id)}`);
+      await renderAll();
+      showToast("Contribuicao removida.", "ok");
+    } catch {
+      showToast("Erro ao remover. Tente novamente.", "err");
+    }
   };
 
   // ── Formulario de contribuicao manual ─────
-  document.getElementById("contribForm").addEventListener("submit", (e) => {
+  document.getElementById("contribForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const type = document.getElementById("cfType").value;
@@ -779,23 +832,22 @@
       return;
     }
 
-    const list = load("contributions");
-    list.push({ type, name, description: desc, amount, ts: new Date().toISOString() });
-    save("contributions", list);
+    try {
+      await apiPost(API.contributions, { type, name, description: desc, amount });
+    } catch {
+      showToast("Erro ao registrar. Tente novamente.", "err");
+      return;
+    }
 
     showToast("Contribuicao registrada com sucesso!", "ok");
     e.target.reset();
-    renderAll();
+    await renderAll();
   });
 
   // ── Render tudo ────────────────────────────
-  function renderAll() {
-    renderRSVP();
-    renderContribs();
+  async function renderAll() {
+    await Promise.all([renderRSVP(), renderContribs()]);
   }
-
-  // Inicializa se ja autenticado
-  if (sessionStorage.getItem("admin_auth") === "1") renderAll();
 </script>
 </body>
 </html>

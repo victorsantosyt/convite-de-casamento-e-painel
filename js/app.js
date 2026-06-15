@@ -6,23 +6,20 @@
 const WHATSAPP_NOIVOS = "556698130-9903";
 
 const WEDDING_DATE = new Date("2026-08-08T18:00:00");
-const STORAGE_KEYS = { rsvps: "sv_rsvps", contributions: "sv_contributions" };
 
-// ── Storage ─────────────────────────────────────
-function loadList(key) {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS[key]) || "[]");
-  } catch {
-    return [];
-  }
-}
+// ── API (Netlify Functions + Blobs) ─────────────
+// As confirmações e contribuições são enviadas para o servidor, para que o
+// painel administrativo consiga vê-las de qualquer aparelho.
+const API = { rsvps: "/api/rsvps", contributions: "/api/contributions" };
 
-function saveList(key, list) {
-  try {
-    localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(list));
-  } catch {
-    // localStorage indisponível
-  }
+async function apiPost(url, data) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`request_failed_${res.status}`);
+  return res.json();
 }
 
 // ── Toast ────────────────────────────────────────
@@ -127,7 +124,7 @@ const nameInput  = document.getElementById("guestName");
 const acceptBtn  = document.getElementById("acceptBtn");
 const declineBtn = document.getElementById("declineBtn");
 
-function submitRSVP(status) {
+async function submitRSVP(status) {
   const name = nameInput ? nameInput.value.trim() : "";
 
   if (!name) {
@@ -136,16 +133,18 @@ function submitRSVP(status) {
     return;
   }
 
-  const list = loadList("rsvps");
-  const idx  = list.findIndex((r) => r.name.toLowerCase() === name.toLowerCase());
-  const entry = { name, status, ts: new Date().toISOString() };
+  // Evita cliques duplicados enquanto envia
+  if (acceptBtn)  acceptBtn.disabled  = true;
+  if (declineBtn) declineBtn.disabled = true;
 
-  if (idx >= 0) {
-    list[idx] = entry;
-  } else {
-    list.push(entry);
+  try {
+    await apiPost(API.rsvps, { name, status });
+  } catch {
+    toast("Não foi possível registrar agora. Verifique sua conexão e tente novamente.", "error");
+    if (acceptBtn)  acceptBtn.disabled  = false;
+    if (declineBtn) declineBtn.disabled = false;
+    return;
   }
-  saveList("rsvps", list);
 
   addWhatsAppCTA(name, status);
 
@@ -153,12 +152,10 @@ function submitRSVP(status) {
 
   if (status === "accepted") {
     toast(`Presença confirmada! Obrigado, ${first}! Nos vemos em breve!`, "success");
-    if (acceptBtn)  { acceptBtn.textContent = "Presença Confirmada!"; acceptBtn.disabled = true; }
-    if (declineBtn) declineBtn.disabled = true;
+    if (acceptBtn) acceptBtn.textContent = "Presença Confirmada!";
   } else {
     toast(`Entendemos, ${first}. Sentiremos sua falta!`, "info");
-    if (declineBtn) { declineBtn.textContent = "Recusa Registrada"; declineBtn.disabled = true; }
-    if (acceptBtn)  acceptBtn.disabled = true;
+    if (declineBtn) declineBtn.textContent = "Recusa Registrada";
   }
 
   if (nameInput) nameInput.disabled = true;
@@ -217,7 +214,7 @@ const giftForm  = document.getElementById("giftForm");
 if (giftBtn) giftBtn.addEventListener("click", () => openModal(giftModal));
 
 if (giftForm) {
-  giftForm.addEventListener("submit", (e) => {
+  giftForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const giverEl = document.getElementById("giftGiver");
@@ -230,14 +227,22 @@ if (giftForm) {
       return;
     }
 
-    const list = loadList("contributions");
-    list.push({ type: "gift", name: giver, description: desc, amount: "", ts: new Date().toISOString() });
-    saveList("contributions", list);
+    const submitBtn = giftForm.querySelector('[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      await apiPost(API.contributions, { type: "gift", name: giver, description: desc, amount: "" });
+    } catch {
+      toast("Não foi possível registrar agora. Tente novamente.", "error");
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
 
     const first = giver.split(" ")[0];
     toast(`Obrigado, ${first}! Presente registrado com carinho!`, "success");
 
     closeModal(giftModal);
     giftForm.reset();
+    if (submitBtn) submitBtn.disabled = false;
   });
 }
