@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — Casamento S&V</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/light/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <style>
+    /* Phosphor Icons alignment */
+    i[class*="ph-"] { display:inline-block; vertical-align:middle; line-height:1; }
+    .login-icon i[class*="ph-"],
+    .stat-icon i[class*="ph-"],
+    .empty-icon i[class*="ph-"] { display:block; font-size:inherit; }
+    /* ── Reset & base ──────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { -webkit-text-size-adjust:100%; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #EEF4FB;
+      color: #2D3748;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Variáveis ─────────────────────────── */
+    :root {
+      --navy:       #1A3A5C;
+      --blue-mid:   #5B8DB8;
+      --blue-dark:  #3A6B96;
+      --gold:       #C9A84C;
+      --gold-light: #E8C84A;
+      --white:      #FFFFFF;
+      --off-white:  #F8FBFF;
+      --bg:         #EEF4FB;
+      --text:       #2D3748;
+      --soft:       #5A6B7E;
+      --border:     #D0E2F0;
+      --green:      #27AE60;
+      --red:        #C0392B;
+      --shadow:     0 8px 32px rgba(26,58,92,.12);
+    }
+
+    /* ── Login screen ──────────────────────── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(160deg, var(--navy) 0%, var(--blue-dark) 100%);
+    }
+
+    .login-box {
+      background: var(--white);
+      border-radius: 28px;
+      padding: 48px 36px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,.22);
+    }
+
+    .login-icon { font-size: 2.8rem; margin-bottom: 12px; }
+
+    .login-box h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    .login-box p {
+      color: var(--soft);
+      font-size: .85rem;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .pin-input {
+      width: 100%;
+      padding: 16px 20px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      font-size: 1.6rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      color: var(--navy);
+      text-align: center;
+      letter-spacing: 8px;
+      outline: none;
+      margin-bottom: 16px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .pin-input:focus {
+      border-color: var(--blue-mid);
+      box-shadow: 0 0 0 3px rgba(91,141,184,.16);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, var(--blue-mid), var(--navy));
+      color: var(--white);
+      font-size: .95rem;
+      font-weight: 700;
+      font-family: 'Montserrat', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(58,107,150,.30);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(58,107,150,.40); }
+
+    #loginError {
+      margin-top: 12px;
+      color: var(--red);
+      font-size: .82rem;
+      font-weight: 600;
+      min-height: 18px;
+    }
+
+    .pin-hint {
+      margin-top: 18px;
+      font-size: .78rem;
+      color: #9DB2C4;
+    }
+
+    /* ── Dashboard ─────────────────────────── */
+    #dashboard { display: none; }
+
+    /* Header */
+    .admin-header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue-dark) 100%);
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .admin-header-left h1 {
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--white);
+      font-size: 1.6rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .admin-header-left p {
+      color: var(--gold-light);
+      font-size: .76rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .btn-logout {
+      padding: 9px 20px;
+      border: 1.5px solid rgba(255,255,255,.30);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.85);
+      border-radius: 50px;
+      font-size: .8rem;
+      font-weight: 600;
+      font-family: 'Montserrat', sans-serif;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-logout:hover { background: rgba(255,255,255,.16); }
+
+    /* Content wrapper */
+    .admin-content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+
+    /* ── Stats cards ───────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stat-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .stat-value {
+      font-size: 2.2rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: .75rem;
+      color: var(--soft);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-card.red   .stat-value { color: var(--red); }
+    .stat-card.gold  .stat-value { color: #9A6E0A; }
+
+    /* ── Secoes ────────────────────────────── */
+    .section-block {
+      background: var(--white);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-head h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .badge {
+      background: var(--bg);
+      color: var(--soft);
+      border-radius: 50px;
+      padding: 4px 12px;
+      font-size: .75rem;
+      font-weight: 700;
+    }
+
+    /* ── Tabelas ───────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+
+    th {
+      background: var(--bg);
+      color: var(--soft);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 11px 18px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--off-white); }
+
+    /* Status pills */
+    .pill {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: .73rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+    }
+
+    .pill-green  { background: #D4EDDA; color: #155724; }
+    .pill-red    { background: #F8D7DA; color: #721C24; }
+    .pill-blue   { background: #D0E9FF; color: #0C4A8A; }
+    .pill-gold   { background: #FFF3CD; color: #856404; }
+
+    /* Delete button */
+    .btn-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #B0BFCC;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: color .15s, background .15s;
+    }
+
+    .btn-del:hover { color: var(--red); background: #FDE8E8; }
+
+    /* Empty state */
+    .empty-state {
+      padding: 44px 20px;
+      text-align: center;
+      color: var(--soft);
+      font-size: .88rem;
+    }
+
+    .empty-icon { font-size: 2.2rem; margin-bottom: 10px; display: block; }
+
+    /* ── Formulario de contribuicao manual ─── */
+    .contrib-form {
+      padding: 20px 24px 24px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .contrib-form input,
+    .contrib-form select {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: .88rem;
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .contrib-form input:focus,
+    .contrib-form select:focus {
+      border-color: var(--blue-mid);
+      box-shadow: 0 0 0 3px rgba(91,141,184,.14);
+    }
+
+    .contrib-form input::placeholder { color: #9DB2C4; }
+
+    .contrib-form .full { grid-column: 1 / -1; }
+
+    .btn-add {
+      grid-column: 1 / -1;
+      padding: 14px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--navy);
+      font-size: .9rem;
+      font-weight: 700;
+      font-family: 'Montserrat', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(201,168,76,.28);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,168,76,.40); }
+
+    /* ── Toast ─────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%) translateY(90px);
+      background: var(--navy);
+      color: var(--white);
+      padding: 12px 26px;
+      border-radius: 50px;
+      font-size: .86rem;
+      font-weight: 500;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      transition: transform .28s cubic-bezier(.34,1.4,.64,1), opacity .22s;
+      white-space: nowrap;
+      max-width: calc(100vw - 40px);
+      text-align: center;
+      box-shadow: 0 8px 28px rgba(0,0,0,.22);
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.ok   { background: #1a7a40; }
+    #toast.err  { background: #a52020; }
+
+    /* ── Responsive ────────────────────────── */
+    @media (max-width: 500px) {
+      .admin-header { padding: 18px 16px; }
+      .admin-content { padding: 20px 12px 50px; }
+      .contrib-form { grid-template-columns: 1fr; }
+      .contrib-form .full { grid-column: 1; }
+      .contrib-form .btn-add { grid-column: 1; }
+      .section-head { padding: 16px 16px 14px; }
+      td, th { padding: 11px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ TELA DE LOGIN ═══════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-icon"><i class="ph-light ph-rings"></i></div>
+    <h1>Painel Admin</h1>
+    <p>Stephanny Dias &amp; Victor Santos<br>08 · 08 · 2026</p>
+
+    <input
+      id="pinInput"
+      class="pin-input"
+      type="password"
+      inputmode="numeric"
+      maxlength="4"
+      placeholder="·  ·  ·  ·"
+      autocomplete="off"
+      aria-label="PIN de acesso">
+
+    <button class="btn-login" id="loginBtn">Entrar</button>
+    <div id="loginError" role="alert"></div>
+    <p class="pin-hint">PIN: data do casamento (4 dígitos)</p>
+  </div>
+</div>
+
+<!-- ═══════════ DASHBOARD ═══════════════ -->
+<div id="dashboard">
+
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <h1>Painel de Controle</h1>
+      <p>Stephanny &amp; Victor — 08/08/2026</p>
+    </div>
+    <button class="btn-logout" id="logoutBtn">Sair</button>
+  </header>
+
+  <main class="admin-content">
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <span class="stat-icon"><i class="ph-light ph-users"></i></span>
+        <span class="stat-value" id="sTotalRsvp">0</span>
+        <span class="stat-label">Respostas</span>
+      </div>
+      <div class="stat-card green">
+        <span class="stat-icon"><i class="ph-light ph-check-circle"></i></span>
+        <span class="stat-value" id="sAccepted">0</span>
+        <span class="stat-label">Confirmados</span>
+      </div>
+      <div class="stat-card red">
+        <span class="stat-icon"><i class="ph-light ph-x-circle"></i></span>
+        <span class="stat-value" id="sDeclined">0</span>
+        <span class="stat-label">Recusados</span>
+      </div>
+      <div class="stat-card gold">
+        <span class="stat-icon"><i class="ph-light ph-gift"></i></span>
+        <span class="stat-value" id="sContribs">0</span>
+        <span class="stat-label">Contribuicoes</span>
+      </div>
+    </div>
+
+    <!-- Convidados -->
+    <div class="section-block">
+      <div class="section-head">
+        <h2>Lista de Convidados</h2>
+        <span class="badge" id="rsvpBadge">0</span>
+      </div>
+      <div class="table-wrap">
+        <table id="rsvpTable">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Status</th>
+              <th>Data / Hora</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rsvpBody">
+            <!-- preenchido via JS -->
+          </tbody>
+        </table>
+        <div id="rsvpEmpty" class="empty-state" style="display:none">
+          <span class="empty-icon"><i class="ph-light ph-clipboard-text"></i></span>
+          Nenhuma confirmacao recebida ainda.
+        </div>
+      </div>
+    </div>
+
+    <!-- Contribuicoes -->
+    <div class="section-block">
+      <div class="section-head">
+        <h2>Contribuicoes</h2>
+        <span class="badge" id="contribBadge">0</span>
+      </div>
+      <div class="table-wrap">
+        <table id="contribTable">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Nome</th>
+              <th>Descricao / Valor</th>
+              <th>Data</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="contribBody">
+            <!-- preenchido via JS -->
+          </tbody>
+        </table>
+        <div id="contribEmpty" class="empty-state" style="display:none">
+          <span class="empty-icon"><i class="ph-light ph-heart"></i></span>
+          Nenhuma contribuicao registrada ainda.
+        </div>
+      </div>
+
+      <!-- Formulario para registrar contribuicao manual -->
+      <form class="contrib-form" id="contribForm" novalidate>
+        <select id="cfType">
+          <option value="pix">PIX</option>
+          <option value="gift">Presente</option>
+        </select>
+        <input
+          id="cfName"
+          type="text"
+          placeholder="Nome do contribuinte"
+          maxlength="80"
+          required>
+        <input
+          id="cfDesc"
+          type="text"
+          placeholder="Descricao do presente"
+          maxlength="100"
+          class="full">
+        <input
+          id="cfAmount"
+          type="text"
+          placeholder="Valor (ex: R$ 100,00) — opcional"
+          maxlength="40">
+        <button type="submit" class="btn-add">+ Registrar Contribuicao</button>
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div id="toast" role="alert" aria-live="polite"></div>
+
+<script>
+  /* ═══════════════════════════════════════════
+     Admin Panel — Stephanny & Victor
+     ═══════════════════════════════════════════ */
+
+  const PIN = "0808";
+  const KEYS = { rsvps: "sv_rsvps", contributions: "sv_contributions" };
+
+  // ── Storage helpers ────────────────────────
+  function load(key) {
+    try { return JSON.parse(localStorage.getItem(KEYS[key]) || "[]"); }
+    catch { return []; }
+  }
+
+  function save(key, list) {
+    try { localStorage.setItem(KEYS[key], JSON.stringify(list)); }
+    catch { showToast("Erro ao salvar dados.", "err"); }
+  }
+
+  // ── Toast ──────────────────────────────────
+  const toastEl = document.getElementById("toast");
+  let toastT = null;
+
+  function showToast(msg, type = "", ms = 3500) {
+    clearTimeout(toastT);
+    toastEl.textContent = msg;
+    toastEl.className = `show ${type}`;
+    toastT = setTimeout(() => { toastEl.className = ""; }, ms);
+  }
+
+  // ── Login ──────────────────────────────────
+  const loginScreen = document.getElementById("loginScreen");
+  const dashboard   = document.getElementById("dashboard");
+  const pinInput    = document.getElementById("pinInput");
+  const loginErr    = document.getElementById("loginError");
+  let attempts = 0;
+
+  function tryLogin() {
+    const val = pinInput.value.trim();
+    if (val === PIN) {
+      sessionStorage.setItem("admin_auth", "1");
+      loginScreen.style.display = "none";
+      dashboard.style.display   = "block";
+      renderAll();
+    } else {
+      attempts++;
+      loginErr.textContent = attempts >= 3
+        ? "Dica: data do casamento (dia + mes)"
+        : "PIN incorreto. Tente novamente.";
+      pinInput.value = "";
+      pinInput.focus();
+    }
+  }
+
+  document.getElementById("loginBtn").addEventListener("click", tryLogin);
+  pinInput.addEventListener("keydown", (e) => { if (e.key === "Enter") tryLogin(); });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    sessionStorage.removeItem("admin_auth");
+    dashboard.style.display   = "none";
+    loginScreen.style.display = "flex";
+    pinInput.value = "";
+    loginErr.textContent = "";
+  });
+
+  // Auto-login se sessao ainda ativa
+  if (sessionStorage.getItem("admin_auth") === "1") {
+    loginScreen.style.display = "none";
+    dashboard.style.display   = "block";
+  }
+
+  // ── Formatar data ──────────────────────────
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString("pt-BR", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit"
+      }).replace(",", " •");
+    } catch { return "—"; }
+  }
+
+  // ── Escapar HTML ───────────────────────────
+  function esc(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ── Render RSVP ───────────────────────────
+  function renderRSVP() {
+    const list  = load("rsvps");
+    const body  = document.getElementById("rsvpBody");
+    const empty = document.getElementById("rsvpEmpty");
+    const badge = document.getElementById("rsvpBadge");
+
+    badge.textContent = list.length;
+
+    const accepted = list.filter(r => r.status === "accepted").length;
+    const declined = list.filter(r => r.status === "declined").length;
+
+    document.getElementById("sTotalRsvp").textContent = list.length;
+    document.getElementById("sAccepted").textContent  = accepted;
+    document.getElementById("sDeclined").textContent  = declined;
+
+    if (!list.length) {
+      body.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+
+    empty.style.display = "none";
+    body.innerHTML = list.slice().reverse().map((r, i) => {
+      const realIdx = list.length - 1 - i;
+      const pill = r.status === "accepted"
+        ? '<span class="pill pill-green">Confirmado</span>'
+        : '<span class="pill pill-red">Recusou</span>';
+
+      return `<tr>
+        <td><strong>${esc(r.name)}</strong></td>
+        <td>${pill}</td>
+        <td style="font-size:.8rem;color:var(--soft)">${fmtDate(r.ts)}</td>
+        <td>
+          <button class="btn-del" title="Remover" onclick="removeRSVP(${realIdx})"><i class="ph ph-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
+  window.removeRSVP = function(idx) {
+    if (!confirm("Remover esta confirmacao?")) return;
+    const list = load("rsvps");
+    list.splice(idx, 1);
+    save("rsvps", list);
+    renderAll();
+    showToast("Registro removido.", "ok");
+  };
+
+  // ── Render Contribuicoes ──────────────────
+  function renderContribs() {
+    const list  = load("contributions");
+    const body  = document.getElementById("contribBody");
+    const empty = document.getElementById("contribEmpty");
+    const badge = document.getElementById("contribBadge");
+
+    badge.textContent = list.length;
+    document.getElementById("sContribs").textContent = list.length;
+
+    if (!list.length) {
+      body.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+
+    empty.style.display = "none";
+    body.innerHTML = list.slice().reverse().map((c, i) => {
+      const realIdx = list.length - 1 - i;
+      const pill = c.type === "pix"
+        ? '<span class="pill pill-blue">PIX</span>'
+        : '<span class="pill pill-gold">Presente</span>';
+      const desc = c.description || c.amount || "—";
+
+      return `<tr>
+        <td>${pill}</td>
+        <td><strong>${esc(c.name)}</strong></td>
+        <td style="color:var(--soft);font-size:.84rem">${esc(desc)}${c.amount && c.description ? " — " + esc(c.amount) : ""}</td>
+        <td style="font-size:.8rem;color:var(--soft);white-space:nowrap">${fmtDate(c.ts)}</td>
+        <td>
+          <button class="btn-del" title="Remover" onclick="removeContrib(${realIdx})"><i class="ph ph-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join("");
+  }
+
+  window.removeContrib = function(idx) {
+    if (!confirm("Remover esta contribuicao?")) return;
+    const list = load("contributions");
+    list.splice(idx, 1);
+    save("contributions", list);
+    renderAll();
+    showToast("Contribuicao removida.", "ok");
+  };
+
+  // ── Formulario de contribuicao manual ─────
+  document.getElementById("contribForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const type = document.getElementById("cfType").value;
+    const name = document.getElementById("cfName").value.trim();
+    const desc = document.getElementById("cfDesc").value.trim();
+    const amount = document.getElementById("cfAmount").value.trim();
+
+    if (!name) {
+      showToast("Informe o nome do contribuinte.", "err");
+      document.getElementById("cfName").focus();
+      return;
+    }
+    if (!desc && type === "gift") {
+      showToast("Informe a descricao do presente.", "err");
+      document.getElementById("cfDesc").focus();
+      return;
+    }
+
+    const list = load("contributions");
+    list.push({ type, name, description: desc, amount, ts: new Date().toISOString() });
+    save("contributions", list);
+
+    showToast("Contribuicao registrada com sucesso!", "ok");
+    e.target.reset();
+    renderAll();
+  });
+
+  // ── Render tudo ────────────────────────────
+  function renderAll() {
+    renderRSVP();
+    renderContribs();
+  }
+
+  // Inicializa se ja autenticado
+  if (sessionStorage.getItem("admin_auth") === "1") renderAll();
+</script>
+</body>
+</html>
