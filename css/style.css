@@ -567,6 +567,23 @@ footer p {
   font-style: italic;
 }
 
+.footer-dev {
+  margin-top: 24px;
+  font-size: .75rem !important;
+  color: rgba(255,255,255,.35) !important;
+  letter-spacing: .04em;
+}
+
+.footer-dev a {
+  color: rgba(255,255,255,.45);
+  text-decoration: none;
+  transition: color .2s;
+}
+
+.footer-dev a:hover {
+  color: var(--gold-light);
+}
+
 /* ─── MODAIS ────────────────────────────────── */
 .modal {
   display: none;
