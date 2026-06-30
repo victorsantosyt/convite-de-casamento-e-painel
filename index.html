@@ -30,10 +30,14 @@
     </div>
   </div>
 
+  <!-- ─── ÁUDIO DE FUNDO ───────────────────── -->
+  <audio id="bgAudio" src="./audio/musica.mp3" loop preload="none"></audio>
+
   <!-- ─── PLAYER DE MÚSICA ─────────────────── -->
   <div id="musicWidget" class="music-widget" style="display:none" aria-label="Player de música">
+    <i class="ph-light ph-music-note music-icon" aria-hidden="true"></i>
+    <span class="music-label">Tocando agora</span>
     <button id="closeMusicBtn" class="music-close" aria-label="Fechar player">&#x2715;</button>
-    <div id="spotifyContainer"></div>
   </div>
 
   <!-- ─── HERO ─────────────────────────────── -->

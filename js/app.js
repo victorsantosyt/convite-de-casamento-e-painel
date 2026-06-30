@@ -4,29 +4,22 @@
    ============================================== */
 
 const WHATSAPP_NOIVOS = "556698130-9903";
-const SPOTIFY_TRACK   = "6cJpYVNNuhSOPdZqMKlkbL";
-
 // ── Tela de entrada + música ─────────────────────
-const entrySplash     = document.getElementById("entrySplash");
-const enterBtn        = document.getElementById("enterBtn");
-const musicWidget     = document.getElementById("musicWidget");
-const closeMusicBtn   = document.getElementById("closeMusicBtn");
+const entrySplash   = document.getElementById("entrySplash");
+const enterBtn      = document.getElementById("enterBtn");
+const musicWidget   = document.getElementById("musicWidget");
+const closeMusicBtn = document.getElementById("closeMusicBtn");
+const bgAudio       = document.getElementById("bgAudio");
 
 function openInvitation() {
   if (!entrySplash) return;
 
   entrySplash.classList.add("leaving");
 
-  const container = document.getElementById("spotifyContainer");
-  if (container && musicWidget) {
-    const iframe = document.createElement("iframe");
-    iframe.src     = `https://open.spotify.com/embed/track/${SPOTIFY_TRACK}?autoplay=1&theme=0`;
-    iframe.width   = "100%";
-    iframe.height  = "80";
-    iframe.frameBorder = "0";
-    iframe.allow   = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
-    container.appendChild(iframe);
-    musicWidget.style.display = "block";
+  if (bgAudio) {
+    bgAudio.volume = 0.5;
+    bgAudio.play().catch(() => {});
+    if (musicWidget) musicWidget.style.display = "flex";
   }
 
   setTimeout(() => {
@@ -40,8 +33,9 @@ if (entrySplash) {
   if (enterBtn) enterBtn.addEventListener("click", openInvitation);
 }
 
-if (closeMusicBtn && musicWidget) {
+if (closeMusicBtn && musicWidget && bgAudio) {
   closeMusicBtn.addEventListener("click", () => {
+    bgAudio.pause();
     musicWidget.style.display = "none";
   });
 }
