@@ -430,6 +430,78 @@
     #toast.err  { background: #a52020; }
 
     /* ── Responsive ────────────────────────── */
+    /* ── Search bar ────────────────────────── */
+    .search-bar {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-bar input {
+      flex: 1;
+      padding: 11px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      font-size: .875rem;
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .search-bar input:focus {
+      border-color: var(--blue-mid);
+      box-shadow: 0 0 0 3px rgba(91,141,184,.14);
+      background: var(--white);
+    }
+
+    .search-bar input::placeholder { color: #9DB2C4; }
+
+    .btn-search {
+      padding: 11px 20px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, var(--blue-mid), var(--navy));
+      color: var(--white);
+      font-size: .82rem;
+      font-weight: 700;
+      font-family: 'Montserrat', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(58,107,150,.24);
+      transition: transform .15s, box-shadow .15s;
+    }
+
+    .btn-search:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(58,107,150,.34); }
+
+    .btn-search-clear {
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      background: var(--white);
+      color: var(--soft);
+      font-size: .82rem;
+      font-weight: 600;
+      font-family: 'Montserrat', sans-serif;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .btn-search-clear:hover { background: #F8D7DA; color: var(--red); border-color: #F0C6C2; }
+
+    .search-count {
+      font-size: .78rem;
+      color: var(--soft);
+      white-space: nowrap;
+      font-weight: 600;
+    }
+
     @media (max-width: 500px) {
       .admin-header { padding: 18px 16px; }
       .admin-content { padding: 20px 12px 50px; }
@@ -438,6 +510,8 @@
       .contrib-form .btn-add { grid-column: 1; }
       .section-head { padding: 16px 16px 14px; }
       td, th { padding: 11px 12px; }
+      .search-bar { padding: 12px 14px; flex-wrap: wrap; }
+      .btn-search-clear { display: none; }
     }
   </style>
 </head>
@@ -511,6 +585,23 @@
           <span class="badge" id="rsvpBadge">0</span>
           <button class="btn-clear" id="clearRsvpBtn" type="button">Limpar tudo</button>
         </div>
+      </div>
+      <!-- Barra de busca -->
+      <div class="search-bar">
+        <input
+          id="rsvpSearch"
+          type="search"
+          placeholder="Buscar convidado por nome…"
+          maxlength="80"
+          aria-label="Buscar convidado por nome"
+          autocomplete="off">
+        <button class="btn-search" id="rsvpSearchBtn" type="button">
+          <i class="ph ph-magnifying-glass"></i> Buscar
+        </button>
+        <button class="btn-search-clear" id="rsvpSearchClear" type="button" title="Limpar busca">
+          <i class="ph ph-x"></i>
+        </button>
+        <span class="search-count" id="rsvpSearchCount" style="display:none"></span>
       </div>
       <div class="table-wrap">
         <table id="rsvpTable">
@@ -729,26 +820,11 @@
   }
 
   // ── Render RSVP ───────────────────────────
-  async function renderRSVP() {
+  let allRsvps = [];  // cache para busca local
+
+  function renderRsvpRows(list) {
     const body  = document.getElementById("rsvpBody");
     const empty = document.getElementById("rsvpEmpty");
-    const badge = document.getElementById("rsvpBadge");
-
-    let list;
-    try {
-      ({ rsvps: list } = await apiGet(API.rsvps));
-    } catch {
-      return; // 401 ja faz logout; outros erros sao silenciosos no render
-    }
-
-    badge.textContent = list.length;
-
-    const accepted = list.filter(r => r.status === "accepted").length;
-    const declined = list.filter(r => r.status === "declined").length;
-
-    document.getElementById("sTotalRsvp").textContent = list.length;
-    document.getElementById("sAccepted").textContent  = accepted;
-    document.getElementById("sDeclined").textContent  = declined;
 
     if (!list.length) {
       body.innerHTML = "";
@@ -772,6 +848,63 @@
       </tr>`;
     }).join("");
   }
+
+  function applyRsvpSearch() {
+    const term = document.getElementById("rsvpSearch").value.trim().toLowerCase();
+    const countEl = document.getElementById("rsvpSearchCount");
+
+    if (!term) {
+      renderRsvpRows(allRsvps);
+      countEl.style.display = "none";
+      return;
+    }
+
+    const filtered = allRsvps.filter(r => r.name.toLowerCase().includes(term));
+    renderRsvpRows(filtered);
+    countEl.style.display = "inline";
+    countEl.textContent = filtered.length === 1
+      ? "1 resultado"
+      : `${filtered.length} resultados`;
+  }
+
+  async function renderRSVP() {
+    const badge = document.getElementById("rsvpBadge");
+
+    let list;
+    try {
+      ({ rsvps: list } = await apiGet(API.rsvps));
+    } catch {
+      return; // 401 ja faz logout; outros erros sao silenciosos no render
+    }
+
+    allRsvps = list;
+    badge.textContent = list.length;
+
+    const accepted = list.filter(r => r.status === "accepted").length;
+    const declined = list.filter(r => r.status === "declined").length;
+
+    document.getElementById("sTotalRsvp").textContent = list.length;
+    document.getElementById("sAccepted").textContent  = accepted;
+    document.getElementById("sDeclined").textContent  = declined;
+
+    applyRsvpSearch();
+  }
+
+  // Botao buscar e tecla Enter
+  document.getElementById("rsvpSearchBtn").addEventListener("click", applyRsvpSearch);
+  document.getElementById("rsvpSearch").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyRsvpSearch();
+  });
+
+  // Limpar busca
+  document.getElementById("rsvpSearchClear").addEventListener("click", () => {
+    document.getElementById("rsvpSearch").value = "";
+    applyRsvpSearch();
+    document.getElementById("rsvpSearch").focus();
+  });
+
+  // Limpar busca ao usar o input type=search nativo (botão × do browser)
+  document.getElementById("rsvpSearch").addEventListener("search", applyRsvpSearch);
 
   window.removeRSVP = async function(id) {
     if (!confirm("Remover esta confirmacao?")) return;
