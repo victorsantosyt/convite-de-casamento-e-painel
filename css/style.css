@@ -303,8 +303,8 @@ h2 {
 .photo-wrap img {
   width: 100%;
   object-fit: cover;
-  max-height: 500px;
-  object-position: center top;
+  max-height: 640px;
+  object-position: center 12%;
   transition: transform .5s ease;
 }
 
