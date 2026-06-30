@@ -58,6 +58,8 @@ i[class*="ph-"] {
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -66,6 +68,7 @@ body {
   color: var(--text);
   overflow-x: hidden;
   line-height: 1.65;
+  min-height: 100%;
 }
 
 img {

@@ -68,11 +68,23 @@ function tick() {
 tick();
 setInterval(tick, 1000);
 
+// ── Scroll suave para âncoras internas ───────────
+document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+  anchor.addEventListener("click", (e) => {
+    const target = document.querySelector(anchor.getAttribute("href"));
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
+
 // ── Modal engine ─────────────────────────────────
 function openModal(modal) {
   if (!modal) return;
-  modal.classList.add("open");
+  const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+  if (scrollbarW > 0) document.body.style.paddingRight = scrollbarW + "px";
   document.body.style.overflow = "hidden";
+  modal.classList.add("open");
   const focusable = modal.querySelector("input, button");
   if (focusable) setTimeout(() => focusable.focus(), 80);
 }
@@ -81,6 +93,7 @@ function closeModal(modal) {
   if (!modal) return;
   modal.classList.remove("open");
   document.body.style.overflow = "";
+  document.body.style.paddingRight = "";
 }
 
 document.addEventListener("click", (e) => {
