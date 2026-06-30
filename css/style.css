@@ -693,6 +693,143 @@ footer p {
   word-break: break-all;
 }
 
+/* PIX modal — passos */
+#pixStep1, #pixStep2, #pixStep3 {
+  animation: pixFadeIn .22s ease;
+}
+
+@keyframes pixFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+#pixForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pix-amount-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 18px;
+  gap: 6px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pix-amount-wrap:focus-within {
+  border-color: var(--blue-mid);
+  box-shadow: 0 0 0 3px rgba(91,141,184,.16);
+}
+
+.pix-amount-prefix {
+  color: var(--text-soft);
+  font-size: .9rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.pix-amount-wrap input[type="number"] {
+  border: none;
+  background: transparent;
+  padding: 15px 0;
+  font-size: .94rem;
+  font-family: 'Montserrat', sans-serif;
+  color: var(--text);
+  width: 100%;
+  outline: none;
+}
+
+.pix-amount-wrap input[type="number"]::placeholder { color: #9DB2C4; }
+
+.pix-amount-wrap input[type="number"]::-webkit-inner-spin-button,
+.pix-amount-wrap input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* Badge do valor no passo 2 */
+.pix-amount-badge {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0 0 14px;
+  line-height: 1.2;
+}
+
+/* Código PIX copia e cola */
+.pix-code-box {
+  background: var(--off-white);
+  border: 1.5px dashed var(--blue-mid);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  cursor: text;
+  user-select: all;
+  text-align: left;
+}
+
+.pix-code-box span {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: .74rem;
+  color: var(--navy);
+  word-break: break-all;
+  line-height: 1.7;
+  display: block;
+}
+
+/* Botão confirmar pagamento (verde) */
+.btn-confirm-pix {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #1a7a40, #27ae60);
+  color: var(--white);
+  font-size: .94rem;
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 8px 26px rgba(39,174,96,.30);
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-confirm-pix:hover  { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(39,174,96,.42); }
+.btn-confirm-pix:active { transform: translateY(0); }
+.btn-confirm-pix:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* Link de voltar */
+.btn-text-link {
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  font-size: .85rem;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-top: 4px;
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: 'Montserrat', sans-serif;
+  transition: color var(--transition);
+}
+
+.btn-text-link:hover { color: var(--navy); }
+
+/* Ícone de sucesso */
+.pix-success-icon {
+  font-size: 4rem;
+  color: #27ae60;
+  margin: 8px 0 14px;
+  line-height: 1;
+}
+
 /* Botão de ação nos modais */
 .btn-action {
   width: 100%;

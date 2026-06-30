@@ -164,25 +164,116 @@ async function submitRSVP(status) {
 if (acceptBtn)  acceptBtn .addEventListener("click", () => submitRSVP("accepted"));
 if (declineBtn) declineBtn.addEventListener("click", () => submitRSVP("declined"));
 
+// ── PIX EMV Payload (Copia e Cola) ───────────────
+const PIX_KEY  = "victorsantosyt24@gmail.com";
+const PIX_NAME = "STEPHANNY E VICTOR";
+const PIX_CITY = "AGUA BOA";
+
+function crc16(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+      else crc <<= 1;
+      crc &= 0xFFFF;
+    }
+  }
+  return crc;
+}
+
+function generatePixCode(amount) {
+  const f = (id, val) => `${id}${String(val.length).padStart(2, "0")}${val}`;
+  const merchantInfo = f("26", f("00", "BR.GOV.BCB.PIX") + f("01", PIX_KEY));
+  let p = f("00", "01") + f("01", "11") + merchantInfo
+        + f("52", "0000") + f("53", "986")
+        + f("54", Number(amount).toFixed(2))
+        + f("58", "BR") + f("59", PIX_NAME) + f("60", PIX_CITY)
+        + f("62", f("05", "***")) + "6304";
+  return p + crc16(p).toString(16).toUpperCase().padStart(4, "0");
+}
+
+function formatBRL(val) {
+  return "R$ " + Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 // ── Modal PIX ────────────────────────────────────
-const pixModal = document.getElementById("pixModal");
-const pixBtn   = document.getElementById("pixBtn");
-const copyBtn  = document.getElementById("copyPixBtn");
-const pixKeyEl = document.getElementById("pixKey");
+const pixModal       = document.getElementById("pixModal");
+const pixBtn         = document.getElementById("pixBtn");
+const pixStep1       = document.getElementById("pixStep1");
+const pixStep2       = document.getElementById("pixStep2");
+const pixStep3       = document.getElementById("pixStep3");
+const pixKeyNote     = document.getElementById("pixKeyNote");
+const pixForm        = document.getElementById("pixForm");
+const pixDonorName   = document.getElementById("pixDonorName");
+const pixAmountInput = document.getElementById("pixAmountInput");
+const pixAmountBadge = document.getElementById("pixAmountBadge");
+const pixCodeText    = document.getElementById("pixCodeText");
+const copyPixCodeBtn = document.getElementById("copyPixCodeBtn");
+const confirmPixBtn  = document.getElementById("confirmPixBtn");
+const pixBackBtn     = document.getElementById("pixBackBtn");
 
-if (pixBtn) pixBtn.addEventListener("click", () => openModal(pixModal));
+function showPixStep(step) {
+  if (pixStep1) pixStep1.style.display = step === 1 ? "" : "none";
+  if (pixStep2) pixStep2.style.display = step === 2 ? "" : "none";
+  if (pixStep3) pixStep3.style.display = step === 3 ? "" : "none";
+  if (pixKeyNote) pixKeyNote.style.display = step === 3 ? "none" : "";
+}
 
-if (copyBtn && pixKeyEl) {
-  copyBtn.addEventListener("click", async () => {
-    const key = pixKeyEl.textContent.trim();
+function resetPixModal() {
+  showPixStep(1);
+  if (pixForm) pixForm.reset();
+  if (copyPixCodeBtn) copyPixCodeBtn.textContent = "Copiar Código PIX";
+  if (confirmPixBtn) {
+    confirmPixBtn.disabled = false;
+    confirmPixBtn.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Pagamento';
+  }
+}
+
+if (pixBtn) pixBtn.addEventListener("click", () => { resetPixModal(); openModal(pixModal); });
+
+document.querySelectorAll("#pixModal .close-modal").forEach((btn) => {
+  btn.addEventListener("click", resetPixModal);
+});
+
+// Passo 1 → 2: gerar código
+if (pixForm) {
+  pixForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name   = pixDonorName   ? pixDonorName.value.trim()        : "";
+    const amount = pixAmountInput ? parseFloat(pixAmountInput.value) : 0;
+
+    if (!name) {
+      toast("Por favor, informe seu nome.", "error");
+      if (pixDonorName) pixDonorName.focus();
+      return;
+    }
+    if (!amount || amount < 1) {
+      toast("Informe um valor mínimo de R$ 1,00.", "error");
+      if (pixAmountInput) pixAmountInput.focus();
+      return;
+    }
+
+    if (pixCodeText)    pixCodeText.textContent    = generatePixCode(amount);
+    if (pixAmountBadge) pixAmountBadge.textContent = formatBRL(amount);
+    if (copyPixCodeBtn) copyPixCodeBtn.textContent = "Copiar Código PIX";
+    showPixStep(2);
+  });
+}
+
+// Copiar código
+if (copyPixCodeBtn) {
+  copyPixCodeBtn.addEventListener("click", async () => {
+    const code = pixCodeText ? pixCodeText.textContent.trim() : "";
+    if (!code) return;
 
     const copied = await (async () => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        try { await navigator.clipboard.writeText(key); return true; }
+        try { await navigator.clipboard.writeText(code); return true; }
         catch { /* fallback */ }
       }
       const ta = Object.assign(document.createElement("textarea"), {
-        value: key,
+        value: code,
         style: "position:fixed;opacity:0;pointer-events:none;",
       });
       document.body.appendChild(ta);
@@ -193,18 +284,53 @@ if (copyBtn && pixKeyEl) {
     })();
 
     if (copied) {
-      copyBtn.textContent = "Chave Copiada!";
-      toast("Chave PIX copiada! Cole no app do seu banco.", "success");
-      setTimeout(() => { copyBtn.textContent = "Copiar Chave PIX"; }, 2800);
+      copyPixCodeBtn.textContent = "Código Copiado!";
+      toast("Código PIX copiado! Cole no app do seu banco para pagar.", "success");
+      setTimeout(() => { if (copyPixCodeBtn) copyPixCodeBtn.textContent = "Copiar Código PIX"; }, 2800);
     } else {
-      toast("Não foi possível copiar. Selecione a chave manualmente.", "error");
+      toast("Não foi possível copiar. Selecione o código manualmente.", "error");
     }
   });
-
-  if (pixKeyEl.parentElement) {
-    pixKeyEl.parentElement.addEventListener("click", () => copyBtn.click());
-  }
 }
+
+// Confirmar pagamento
+let pixConfirming = false;
+if (confirmPixBtn) {
+  confirmPixBtn.addEventListener("click", async () => {
+    if (pixConfirming) return;
+    const name   = pixDonorName   ? pixDonorName.value.trim()        : "";
+    const amount = pixAmountInput ? parseFloat(pixAmountInput.value) : 0;
+    if (!name || !amount) return;
+
+    pixConfirming = true;
+    confirmPixBtn.disabled = true;
+    confirmPixBtn.textContent = "Registrando...";
+
+    try {
+      await apiPost(API.contributions, {
+        type: "pix",
+        name,
+        amount: formatBRL(amount),
+        description: "Contribuição via PIX",
+        confirmed: true,
+      });
+    } catch {
+      toast("Não foi possível registrar agora. Tente novamente.", "error");
+      confirmPixBtn.disabled = false;
+      confirmPixBtn.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Pagamento';
+      pixConfirming = false;
+      return;
+    }
+
+    const first = name.split(" ")[0];
+    showPixStep(3);
+    toast(`Obrigado, ${first}! Sua contribuição foi registrada com carinho!`, "success");
+    pixConfirming = false;
+  });
+}
+
+// Voltar ao passo 1
+if (pixBackBtn) pixBackBtn.addEventListener("click", () => showPixStep(1));
 
 // ── Modal Presentes ───────────────────────────────
 const giftModal = document.getElementById("giftModal");

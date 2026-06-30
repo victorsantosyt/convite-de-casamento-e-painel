@@ -944,12 +944,24 @@
       const pill = c.type === "pix"
         ? '<span class="pill pill-blue">PIX</span>'
         : '<span class="pill pill-gold">Presente</span>';
-      const desc = c.description || c.amount || "—";
+
+      let infoCell;
+      if (c.type === "pix") {
+        const valor = c.amount ? `<strong style="color:var(--gold)">${esc(c.amount)}</strong>` : "—";
+        const conf  = c.confirmed
+          ? '<span class="pill pill-green" style="margin-left:6px">Confirmado</span>'
+          : '<span class="pill" style="margin-left:6px;background:#e8eef4;color:#5a6b7e">Pendente</span>';
+        infoCell = `${valor}${conf}`;
+      } else {
+        const desc = c.description || "—";
+        const amnt = c.amount ? ` <span style="color:var(--gold);font-weight:600">· ${esc(c.amount)}</span>` : "";
+        infoCell = `<span style="color:var(--soft);font-size:.84rem">${esc(desc)}${amnt}</span>`;
+      }
 
       return `<tr>
         <td>${pill}</td>
         <td><strong>${esc(c.name)}</strong></td>
-        <td style="color:var(--soft);font-size:.84rem">${esc(desc)}${c.amount && c.description ? " — " + esc(c.amount) : ""}</td>
+        <td>${infoCell}</td>
         <td style="font-size:.8rem;color:var(--soft);white-space:nowrap">${fmtDate(c.ts)}</td>
         <td>
           <button class="btn-del" title="Remover" onclick="removeContrib('${esc(c.id)}')"><i class="ph ph-trash"></i></button>

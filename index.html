@@ -204,14 +204,44 @@
   <div id="pixModal" class="modal" role="dialog" aria-modal="true" aria-label="Contribuição via PIX">
     <div class="modal-box">
       <button class="close-modal" aria-label="Fechar">&#x2715;</button>
-      <div class="modal-icon" aria-hidden="true"><i class="ph-light ph-qr-code"></i></div>
+      <div class="modal-icon" aria-hidden="true"><i class="ph-light ph-hand-coins"></i></div>
       <h3>Contribuição via PIX</h3>
-      <p class="modal-sub">Copie a chave abaixo e faça sua contribuição</p>
-      <div class="pix-key-box">
-        <span id="pixKey">victorsantosyt24@gmail.com</span>
+
+      <!-- Passo 1: nome e valor -->
+      <div id="pixStep1">
+        <p class="modal-sub">Informe seu nome e o valor que deseja contribuir</p>
+        <form id="pixForm" novalidate>
+          <input id="pixDonorName" type="text" placeholder="Seu nome completo" maxlength="80" autocomplete="name" required>
+          <div class="pix-amount-wrap">
+            <span class="pix-amount-prefix">R$</span>
+            <input id="pixAmountInput" type="number" placeholder="0,00" min="1" step="0.01" inputmode="decimal" required>
+          </div>
+          <button type="submit" class="btn-action">Gerar Código PIX <i class="ph ph-arrow-right" aria-hidden="true"></i></button>
+        </form>
       </div>
-      <button id="copyPixBtn" class="btn-action">Copiar Chave PIX</button>
-      <p class="modal-note">Obrigado pela sua generosidade! Que Deus abençoe você.</p>
+
+      <!-- Passo 2: código gerado -->
+      <div id="pixStep2" style="display:none">
+        <p class="modal-sub">Copie o código abaixo e cole no app do seu banco para pagar</p>
+        <p class="pix-amount-badge" id="pixAmountBadge">R$ 0,00</p>
+        <div class="pix-code-box" id="pixCodeBox">
+          <span id="pixCodeText"></span>
+        </div>
+        <button id="copyPixCodeBtn" class="btn-action">Copiar Código PIX</button>
+        <button id="confirmPixBtn" class="btn-confirm-pix">
+          <i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Pagamento
+        </button>
+        <button id="pixBackBtn" class="btn-text-link">← Alterar valor</button>
+      </div>
+
+      <!-- Passo 3: sucesso -->
+      <div id="pixStep3" style="display:none">
+        <div class="pix-success-icon" aria-hidden="true"><i class="ph ph-check-circle"></i></div>
+        <p class="modal-sub">Contribuição confirmada! Obrigado pela sua generosidade ♡</p>
+        <p class="modal-note">Seu nome foi registrado na nossa lista de contribuições. Que Deus abençoe você!</p>
+      </div>
+
+      <p class="modal-note" id="pixKeyNote">Chave PIX: <strong>victorsantosyt24@gmail.com</strong></p>
     </div>
   </div>
 
