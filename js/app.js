@@ -4,6 +4,47 @@
    ============================================== */
 
 const WHATSAPP_NOIVOS = "556698130-9903";
+const SPOTIFY_TRACK   = "6cJpYVNNuhSOPdZqMKlkbL";
+
+// ── Tela de entrada + música ─────────────────────
+const entrySplash     = document.getElementById("entrySplash");
+const enterBtn        = document.getElementById("enterBtn");
+const musicWidget     = document.getElementById("musicWidget");
+const closeMusicBtn   = document.getElementById("closeMusicBtn");
+
+function openInvitation() {
+  if (!entrySplash) return;
+
+  entrySplash.classList.add("leaving");
+
+  const container = document.getElementById("spotifyContainer");
+  if (container && musicWidget) {
+    const iframe = document.createElement("iframe");
+    iframe.src     = `https://open.spotify.com/embed/track/${SPOTIFY_TRACK}?autoplay=1&theme=0`;
+    iframe.width   = "100%";
+    iframe.height  = "80";
+    iframe.frameBorder = "0";
+    iframe.allow   = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+    container.appendChild(iframe);
+    musicWidget.style.display = "block";
+  }
+
+  setTimeout(() => {
+    entrySplash.remove();
+    document.body.classList.remove("splash-open");
+  }, 650);
+}
+
+if (entrySplash) {
+  document.body.classList.add("splash-open");
+  if (enterBtn) enterBtn.addEventListener("click", openInvitation);
+}
+
+if (closeMusicBtn && musicWidget) {
+  closeMusicBtn.addEventListener("click", () => {
+    musicWidget.style.display = "none";
+  });
+}
 
 const WEDDING_DATE = new Date("2026-08-08T18:00:00");
 

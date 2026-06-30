@@ -15,6 +15,27 @@
 </head>
 <body>
 
+  <!-- ─── TELA DE ENTRADA ──────────────────── -->
+  <div id="entrySplash" class="entry-splash" role="dialog" aria-modal="true" aria-label="Abertura do convite">
+    <div class="entry-content">
+      <span class="entry-ornament" aria-hidden="true"><i class="ph-thin ph-flower-lotus"></i></span>
+      <p class="entry-label">Convite de Casamento</p>
+      <h2 class="entry-names">Stephanny <em>&amp;</em> Victor</h2>
+      <p class="entry-date">08 de Agosto de 2026</p>
+      <button id="enterBtn" class="btn-enter">
+        <i class="ph-light ph-envelope-open" aria-hidden="true"></i>
+        Abrir Convite
+      </button>
+      <p class="entry-hint">toque para abrir</p>
+    </div>
+  </div>
+
+  <!-- ─── PLAYER DE MÚSICA ─────────────────── -->
+  <div id="musicWidget" class="music-widget" style="display:none" aria-label="Player de música">
+    <button id="closeMusicBtn" class="music-close" aria-label="Fechar player">&#x2715;</button>
+    <div id="spotifyContainer"></div>
+  </div>
+
   <!-- ─── HERO ─────────────────────────────── -->
   <header class="hero">
     <div class="hero-content">

@@ -80,6 +80,164 @@ img {
   display: block;
 }
 
+/* ─── TELA DE ENTRADA ───────────────────────── */
+body.splash-open {
+  overflow: hidden;
+}
+
+.entry-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background:
+    linear-gradient(160deg, rgba(26,58,92,.88) 0%, rgba(10,25,45,.97) 100%),
+    url("../imagens/hero.jpg") center top / cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px;
+}
+
+.entry-splash.leaving {
+  animation: splashLeave .65s cubic-bezier(.4,0,.2,1) forwards;
+  pointer-events: none;
+}
+
+@keyframes splashLeave {
+  to { opacity: 0; transform: scale(1.05); }
+}
+
+.entry-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: entryIn .9s ease forwards;
+}
+
+@keyframes entryIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.entry-ornament {
+  font-size: 2.8rem;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 18px;
+  line-height: 1;
+}
+
+.entry-label {
+  font-size: .7rem;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.entry-names {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--white);
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.entry-names em {
+  display: block;
+  font-size: 2.1rem;
+  color: var(--gold);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.entry-date {
+  font-size: .88rem;
+  color: rgba(255,255,255,.7);
+  letter-spacing: 2px;
+  margin-bottom: 34px;
+}
+
+.btn-enter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 44px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  color: var(--navy);
+  font-size: .92rem;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: .5px;
+  cursor: pointer;
+  box-shadow: 0 10px 32px rgba(201,168,76,.45);
+  transition: transform var(--transition), box-shadow var(--transition);
+  margin-bottom: 14px;
+}
+
+.btn-enter:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(201,168,76,.58);
+}
+
+.entry-hint {
+  font-size: .68rem;
+  color: rgba(255,255,255,.30);
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+/* ─── PLAYER SPOTIFY ────────────────────────── */
+.music-widget {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9990;
+  background: #0d0d0d;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.35);
+  animation: musicSlideUp .4s cubic-bezier(.34,1.4,.64,1) forwards;
+}
+
+@keyframes musicSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.music-widget iframe {
+  display: block;
+  width: 100%;
+  border: none;
+}
+
+.music-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 1;
+  background: rgba(255,255,255,.12);
+  border: none;
+  color: rgba(255,255,255,.7);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: .7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s;
+}
+
+.music-close:hover {
+  background: rgba(255,255,255,.25);
+}
+
 /* ─── HERO ──────────────────────────────────── */
 .hero {
   min-height: 100svh;
