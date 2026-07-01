@@ -330,17 +330,16 @@
     .pill-gold   { background: #FFF3CD; color: #856404; }
 
     /* Two-column RSVP layout */
-    #rsvpBody { overflow: hidden; width: 100%; }
+    .rsvp-wrap { overflow: hidden; padding: 16px 18px 20px; }
     .rsvp-cols-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0 24px;
-      width: 100%;
+      gap: 0 28px;
     }
-    .rsvp-col { min-width: 0; overflow: hidden; }
+    .rsvp-col { min-width: 0; }
     @media (max-width: 600px) {
       .rsvp-cols-grid { grid-template-columns: 1fr; }
-      .rsvp-col + .rsvp-col { margin-top: 20px; }
+      .rsvp-col + .rsvp-col { margin-top: 24px; }
     }
     .rsvp-col-title {
       font-size: .73rem;
@@ -365,19 +364,16 @@
       border-bottom: 1px solid var(--border);
     }
     .rsvp-entry {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       align-items: center;
       gap: 6px;
-      padding: 5px 0;
+      padding: 6px 0;
       border-bottom: 1px solid var(--border);
-      font-size: .81rem;
-      width: 100%;
-      overflow: hidden;
     }
     .rsvp-entry:last-child { border-bottom: none; }
-    .rsvp-entry-name { font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .rsvp-entry-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-    .rsvp-entry .pill { padding: 2px 7px; font-size: .65rem; }
+    .rsvp-entry-name { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rsvp-entry .pill { padding: 2px 8px; font-size: .65rem; white-space: nowrap; }
     .rsvp-unknown { margin-top: 16px; padding-top: 8px; border-top: 1px dashed var(--border); }
 
     /* Delete button */
@@ -654,7 +650,7 @@
         </button>
         <span class="search-count" id="rsvpSearchCount" style="display:none"></span>
       </div>
-      <div class="table-wrap">
+      <div class="rsvp-wrap">
         <div id="rsvpBody"></div>
         <div id="rsvpEmpty" class="empty-state" style="display:none">
           <span class="empty-icon"><i class="ph-light ph-clipboard-text"></i></span>
@@ -882,10 +878,8 @@
       : '<span class="pill pill-red">Recusou</span>';
     return `<div class="rsvp-entry">
       <span class="rsvp-entry-name">${esc(r.name)}</span>
-      <div class="rsvp-entry-right">
-        ${pill}
-        <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
-      </div>
+      ${pill}
+      <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
     </div>`;
   }
 
