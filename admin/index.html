@@ -224,6 +224,36 @@
       font-weight: 600;
     }
 
+    .pix-total-bar {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--gold);
+    }
+    .pix-total-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--soft);
+    }
+    .pix-total-label i { font-size: 1.3rem; color: var(--gold); }
+    .pix-total-amount {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+    }
+
     .stat-card.green .stat-value { color: var(--green); }
     .stat-card.red   .stat-value { color: var(--red); }
     .stat-card.gold  .stat-value { color: #9A6E0A; }
@@ -622,11 +652,15 @@
         <span class="stat-value" id="sContribs">0</span>
         <span class="stat-label">Contribuicoes</span>
       </div>
-      <div class="stat-card gold">
-        <span class="stat-icon"><i class="ph-light ph-currency-circle-dollar"></i></span>
-        <span class="stat-value" id="sPixTotal" style="font-size:1.4rem">R$ 0,00</span>
-        <span class="stat-label">Total via PIX</span>
+    </div>
+
+    <!-- Barra total PIX -->
+    <div class="pix-total-bar">
+      <div class="pix-total-label">
+        <i class="ph-light ph-currency-circle-dollar"></i>
+        Total Arrecadado via PIX
       </div>
+      <span class="pix-total-amount" id="sPixTotal">R$ 0,00</span>
     </div>
 
     <!-- Convidados -->
@@ -679,8 +713,7 @@
             <tr>
               <th>Tipo</th>
               <th>Nome</th>
-              <th>Descricao / Valor</th>
-              <th>Data</th>
+              <th>Valor / Descricao</th>
               <th></th>
             </tr>
           </thead>
@@ -694,31 +727,6 @@
         </div>
       </div>
 
-      <!-- Formulario para registrar contribuicao manual -->
-      <form class="contrib-form" id="contribForm" novalidate>
-        <select id="cfType">
-          <option value="pix">PIX</option>
-          <option value="gift">Presente</option>
-        </select>
-        <input
-          id="cfName"
-          type="text"
-          placeholder="Nome do contribuinte"
-          maxlength="80"
-          required>
-        <input
-          id="cfDesc"
-          type="text"
-          placeholder="Descricao do presente"
-          maxlength="100"
-          class="full">
-        <input
-          id="cfAmount"
-          type="text"
-          placeholder="Valor (ex: R$ 100,00) — opcional"
-          maxlength="40">
-        <button type="submit" class="btn-add">+ Registrar Contribuicao</button>
-      </form>
     </div>
 
   </main>
@@ -1053,11 +1061,7 @@
 
       let infoCell;
       if (c.type === "pix") {
-        const valor = c.amount ? `<strong style="color:var(--gold)">${esc(c.amount)}</strong>` : "—";
-        const conf  = c.confirmed
-          ? '<span class="pill pill-green" style="margin-left:6px">Confirmado</span>'
-          : '<span class="pill" style="margin-left:6px;background:#e8eef4;color:#5a6b7e">Pendente</span>';
-        infoCell = `${valor}${conf}`;
+        infoCell = c.amount ? `<strong style="color:var(--gold)">${esc(c.amount)}</strong>` : "—";
       } else {
         const desc = c.description || "—";
         const amnt = c.amount ? ` <span style="color:var(--gold);font-weight:600">· ${esc(c.amount)}</span>` : "";
@@ -1068,7 +1072,6 @@
         <td>${pill}</td>
         <td><strong>${esc(c.name)}</strong></td>
         <td>${infoCell}</td>
-        <td style="font-size:.8rem;color:var(--soft);white-space:nowrap">${fmtDate(c.ts)}</td>
         <td>
           <button class="btn-del" title="Remover" onclick="removeContrib('${esc(c.id)}')"><i class="ph ph-trash"></i></button>
         </td>
@@ -1086,38 +1089,6 @@
       showToast("Erro ao remover. Tente novamente.", "err");
     }
   };
-
-  // ── Formulario de contribuicao manual ─────
-  document.getElementById("contribForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const type = document.getElementById("cfType").value;
-    const name = document.getElementById("cfName").value.trim();
-    const desc = document.getElementById("cfDesc").value.trim();
-    const amount = document.getElementById("cfAmount").value.trim();
-
-    if (!name) {
-      showToast("Informe o nome do contribuinte.", "err");
-      document.getElementById("cfName").focus();
-      return;
-    }
-    if (!desc && type === "gift") {
-      showToast("Informe a descricao do presente.", "err");
-      document.getElementById("cfDesc").focus();
-      return;
-    }
-
-    try {
-      await apiPost(API.contributions, { type, name, description: desc, amount });
-    } catch {
-      showToast("Erro ao registrar. Tente novamente.", "err");
-      return;
-    }
-
-    showToast("Contribuicao registrada com sucesso!", "ok");
-    e.target.reset();
-    await renderAll();
-  });
 
   // ── Limpar tudo (com dupla confirmacao) ────
   async function clearAll(kind) {
