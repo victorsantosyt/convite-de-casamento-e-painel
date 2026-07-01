@@ -333,11 +333,13 @@
     .rsvp-cols-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0 32px;
+      gap: 0 28px;
       padding: 8px 0;
     }
-    @media (max-width: 680px) {
-      .rsvp-cols-grid { grid-template-columns: 1fr; }
+    .rsvp-col { min-width: 0; }
+    @media (max-width: 600px) {
+      .rsvp-cols-grid { grid-template-columns: 1fr; gap: 0; }
+      .rsvp-col + .rsvp-col { margin-top: 24px; }
     }
     .rsvp-col-title {
       font-size: .75rem;
@@ -368,12 +370,12 @@
       padding: 7px 0;
       border-bottom: 1px solid var(--border);
       font-size: .82rem;
-      gap: 8px;
+      gap: 6px;
+      min-width: 0;
     }
     .rsvp-entry:last-child { border-bottom: none; }
-    .rsvp-entry-name { font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rsvp-entry-name { font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
     .rsvp-entry-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .rsvp-entry-date { font-size: .7rem; color: var(--soft); white-space: nowrap; }
     .rsvp-unknown { margin-top: 20px; padding-top: 8px; border-top: 1px dashed var(--border); }
 
     /* Delete button */
@@ -880,7 +882,6 @@
       <span class="rsvp-entry-name">${esc(r.name)}</span>
       <div class="rsvp-entry-right">
         ${pill}
-        <span class="rsvp-entry-date">${fmtDate(r.ts)}</span>
         <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
       </div>
     </div>`;
