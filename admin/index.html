@@ -622,6 +622,11 @@
         <span class="stat-value" id="sContribs">0</span>
         <span class="stat-label">Contribuicoes</span>
       </div>
+      <div class="stat-card gold">
+        <span class="stat-icon"><i class="ph-light ph-currency-circle-dollar"></i></span>
+        <span class="stat-value" id="sPixTotal" style="font-size:1.4rem">R$ 0,00</span>
+        <span class="stat-label">Total via PIX</span>
+      </div>
     </div>
 
     <!-- Convidados -->
@@ -854,6 +859,15 @@
       .replace(/"/g, "&quot;");
   }
 
+  function parseBRL(str) {
+    if (!str) return 0;
+    return parseFloat(str.replace(/[^\d,]/g, "").replace(",", ".")) || 0;
+  }
+
+  function formatBRL(val) {
+    return "R$ " + Number(val).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   // ── Render RSVP ───────────────────────────
   let allRsvps = [];  // cache para busca local
 
@@ -1019,6 +1033,11 @@
 
     badge.textContent = list.length;
     document.getElementById("sContribs").textContent = list.length;
+
+    const pixTotal = list
+      .filter(c => c.type === "pix")
+      .reduce((sum, c) => sum + parseBRL(c.amount), 0);
+    document.getElementById("sPixTotal").textContent = formatBRL(pixTotal);
 
     if (!list.length) {
       body.innerHTML = "";

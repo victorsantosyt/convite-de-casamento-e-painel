@@ -255,31 +255,37 @@ const pixBtn         = document.getElementById("pixBtn");
 const pixStep1       = document.getElementById("pixStep1");
 const pixStep2       = document.getElementById("pixStep2");
 const pixStep3       = document.getElementById("pixStep3");
+const pixStep4       = document.getElementById("pixStep4");
 const pixKeyNote     = document.getElementById("pixKeyNote");
 const pixForm        = document.getElementById("pixForm");
+const pixNameForm    = document.getElementById("pixNameForm");
 const pixDonorName   = document.getElementById("pixDonorName");
 const pixAmountInput = document.getElementById("pixAmountInput");
 const pixAmountBadge = document.getElementById("pixAmountBadge");
 const pixCodeText    = document.getElementById("pixCodeText");
 const copyPixCodeBtn = document.getElementById("copyPixCodeBtn");
 const confirmPixBtn  = document.getElementById("confirmPixBtn");
+const submitPixBtn   = document.getElementById("submitPixBtn");
 const pixBackBtn     = document.getElementById("pixBackBtn");
 
 function showPixStep(step) {
   if (pixStep1) pixStep1.style.display = step === 1 ? "" : "none";
   if (pixStep2) pixStep2.style.display = step === 2 ? "" : "none";
   if (pixStep3) pixStep3.style.display = step === 3 ? "" : "none";
-  if (pixKeyNote) pixKeyNote.style.display = step === 3 ? "none" : "";
+  if (pixStep4) pixStep4.style.display = step === 4 ? "" : "none";
+  if (pixKeyNote) pixKeyNote.style.display = step === 4 ? "none" : "";
 }
 
 function resetPixModal() {
   showPixStep(1);
   if (pixForm) pixForm.reset();
+  if (pixNameForm) pixNameForm.reset();
   if (copyPixCodeBtn) copyPixCodeBtn.textContent = "Copiar Código PIX";
-  if (confirmPixBtn) {
-    confirmPixBtn.disabled = false;
-    confirmPixBtn.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Pagamento';
+  if (submitPixBtn) {
+    submitPixBtn.disabled = false;
+    submitPixBtn.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Contribuição';
   }
+  pixConfirming = false;
 }
 
 if (pixBtn) pixBtn.addEventListener("click", () => { resetPixModal(); openModal(pixModal); });
@@ -292,14 +298,8 @@ document.querySelectorAll("#pixModal .close-modal").forEach((btn) => {
 if (pixForm) {
   pixForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    const name   = pixDonorName   ? pixDonorName.value.trim()        : "";
     const amount = pixAmountInput ? parseFloat(pixAmountInput.value) : 0;
 
-    if (!name) {
-      toast("Por favor, informe seu nome.", "error");
-      if (pixDonorName) pixDonorName.focus();
-      return;
-    }
     if (!amount || amount < 1) {
       toast("Informe um valor mínimo de R$ 1,00.", "error");
       if (pixAmountInput) pixAmountInput.focus();
@@ -345,18 +345,35 @@ if (copyPixCodeBtn) {
   });
 }
 
-// Confirmar pagamento
-let pixConfirming = false;
+// Passo 2 → 3: ir para identificação
 if (confirmPixBtn) {
-  confirmPixBtn.addEventListener("click", async () => {
+  confirmPixBtn.addEventListener("click", () => {
+    showPixStep(3);
+    if (pixDonorName) setTimeout(() => pixDonorName.focus(), 80);
+  });
+}
+
+// Passo 3 → 4: registrar contribuição com nome
+let pixConfirming = false;
+if (pixNameForm) {
+  pixNameForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
     if (pixConfirming) return;
     const name   = pixDonorName   ? pixDonorName.value.trim()        : "";
     const amount = pixAmountInput ? parseFloat(pixAmountInput.value) : 0;
-    if (!name || !amount) return;
+
+    if (!name) {
+      toast("Por favor, informe seu nome.", "error");
+      if (pixDonorName) pixDonorName.focus();
+      return;
+    }
+    if (!amount) return;
 
     pixConfirming = true;
-    confirmPixBtn.disabled = true;
-    confirmPixBtn.textContent = "Registrando...";
+    if (submitPixBtn) {
+      submitPixBtn.disabled = true;
+      submitPixBtn.textContent = "Registrando...";
+    }
 
     try {
       await apiPost(API.contributions, {
@@ -368,14 +385,16 @@ if (confirmPixBtn) {
       });
     } catch {
       toast("Não foi possível registrar agora. Tente novamente.", "error");
-      confirmPixBtn.disabled = false;
-      confirmPixBtn.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Pagamento';
+      if (submitPixBtn) {
+        submitPixBtn.disabled = false;
+        submitPixBtn.innerHTML = '<i class="ph ph-check-circle" aria-hidden="true"></i> Confirmar Contribuição';
+      }
       pixConfirming = false;
       return;
     }
 
     const first = name.split(" ")[0];
-    showPixStep(3);
+    showPixStep(4);
     toast(`Obrigado, ${first}! Sua contribuição foi registrada com carinho!`, "success");
     pixConfirming = false;
   });
