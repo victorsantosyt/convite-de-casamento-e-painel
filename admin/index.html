@@ -329,27 +329,52 @@
     .pill-blue   { background: #D0E9FF; color: #0C4A8A; }
     .pill-gold   { background: #FFF3CD; color: #856404; }
 
-    /* Group header rows */
-    .group-header td {
-      background: var(--bg);
-      padding: 8px 18px;
+    /* Two-column RSVP layout */
+    .rsvp-cols-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 32px;
+      padding: 8px 0;
+    }
+    @media (max-width: 680px) {
+      .rsvp-cols-grid { grid-template-columns: 1fr; }
+    }
+    .rsvp-col-title {
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 0 10px;
+      border-bottom: 2px solid;
+      margin-bottom: 2px;
+    }
+    .rsvp-col-noivo .rsvp-col-title { color: #1a5276; border-color: #1a5276; }
+    .rsvp-col-noiva .rsvp-col-title { color: #7b241c; border-color: #7b241c; }
+    .subgroup-label {
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--soft);
+      padding: 10px 0 5px;
+      display: flex;
+      justify-content: space-between;
       border-bottom: 1px solid var(--border);
     }
-    .group-header:hover td { background: var(--bg) !important; cursor: default; }
-    .group-label {
-      font-size: .72rem;
-      font-weight: 700;
-      letter-spacing: .9px;
-      text-transform: uppercase;
+    .rsvp-entry {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem;
+      gap: 8px;
     }
-    .group-count {
-      font-size: .72rem;
-      color: var(--soft);
-      margin-left: 8px;
-    }
-    .group-header-noivo .group-label  { color: #1a5276; }
-    .group-header-noiva .group-label  { color: #7b241c; }
-    .group-header-unknown .group-label { color: var(--soft); }
+    .rsvp-entry:last-child { border-bottom: none; }
+    .rsvp-entry-name { font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rsvp-entry-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .rsvp-entry-date { font-size: .7rem; color: var(--soft); white-space: nowrap; }
+    .rsvp-unknown { margin-top: 20px; padding-top: 8px; border-top: 1px dashed var(--border); }
 
     /* Delete button */
     .btn-del {
@@ -626,19 +651,7 @@
         <span class="search-count" id="rsvpSearchCount" style="display:none"></span>
       </div>
       <div class="table-wrap">
-        <table id="rsvpTable">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Status</th>
-              <th>Data / Hora</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="rsvpBody">
-            <!-- preenchido via JS -->
-          </tbody>
-        </table>
+        <div id="rsvpBody"></div>
         <div id="rsvpEmpty" class="empty-state" style="display:none">
           <span class="empty-icon"><i class="ph-light ph-clipboard-text"></i></span>
           Nenhuma confirmacao recebida ainda.
@@ -844,32 +857,46 @@
   // ── Render RSVP ───────────────────────────
   let allRsvps = [];  // cache para busca local
 
-  const RSVP_GROUP_ORDER = [
-    { side: "noivo", group: "familia",    label: "Família do Noivo",                cls: "group-header-noivo" },
-    { side: "noivo", group: "pastores",   label: "Pastores do Noivo",               cls: "group-header-noivo" },
-    { side: "noivo", group: "padrinhos",  label: "Padrinhos e Madrinhas do Noivo",  cls: "group-header-noivo" },
-    { side: "noivo", group: "amigos",     label: "Amigos do Noivo",                 cls: "group-header-noivo" },
-    { side: "noivo", group: "convidados", label: "Convidados do Noivo",             cls: "group-header-noivo" },
-    { side: "noiva", group: "familia",    label: "Família da Noiva",                cls: "group-header-noiva" },
-    { side: "noiva", group: "pastores",   label: "Pastores da Noiva",               cls: "group-header-noiva" },
-    { side: "noiva", group: "padrinhos",  label: "Padrinhos e Madrinhas da Noiva",  cls: "group-header-noiva" },
-    { side: "noiva", group: "amigas",     label: "Amigas da Noiva",                 cls: "group-header-noiva" },
-    { side: "noiva", group: "convidados", label: "Convidados da Noiva",             cls: "group-header-noiva" },
-    { side: "indefinido", group: "indefinido", label: "Não Identificados",          cls: "group-header-unknown" },
+  const NOIVO_GROUPS = [
+    { group: "familia",    label: "Família" },
+    { group: "pastores",   label: "Pastores" },
+    { group: "padrinhos",  label: "Padrinhos e Madrinhas" },
+    { group: "amigos",     label: "Amigos" },
+    { group: "convidados", label: "Convidados" },
+  ];
+  const NOIVA_GROUPS = [
+    { group: "familia",    label: "Família" },
+    { group: "pastores",   label: "Pastores" },
+    { group: "padrinhos",  label: "Padrinhos e Madrinhas" },
+    { group: "amigas",     label: "Amigas" },
+    { group: "convidados", label: "Convidados" },
   ];
 
-  function rsvpRow(r) {
+  function rsvpEntry(r) {
     const pill = r.status === "accepted"
       ? '<span class="pill pill-green">Confirmado</span>'
       : '<span class="pill pill-red">Recusou</span>';
-    return `<tr>
-      <td><strong>${esc(r.name)}</strong></td>
-      <td>${pill}</td>
-      <td style="font-size:.8rem;color:var(--soft)">${fmtDate(r.ts)}</td>
-      <td>
+    return `<div class="rsvp-entry">
+      <span class="rsvp-entry-name">${esc(r.name)}</span>
+      <div class="rsvp-entry-right">
+        ${pill}
+        <span class="rsvp-entry-date">${fmtDate(r.ts)}</span>
         <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
-      </td>
-    </tr>`;
+      </div>
+    </div>`;
+  }
+
+  function renderCol(side, groups, title, cls, grouped) {
+    let html = `<div class="rsvp-col ${cls}"><div class="rsvp-col-title">${title}</div>`;
+    groups.forEach(({ group, label }) => {
+      const entries = grouped[`${side}|${group}`];
+      if (!entries || !entries.length) return;
+      html += `<div class="rsvp-subgroup">
+        <div class="subgroup-label">${label}<span>${entries.length}</span></div>
+        ${entries.slice().reverse().map(rsvpEntry).join("")}
+      </div>`;
+    });
+    return html + `</div>`;
   }
 
   function renderRsvpRows(list) {
@@ -884,42 +911,30 @@
 
     empty.style.display = "none";
 
-    // Group entries by side|group key
     const grouped = {};
+    const knownKeys = new Set();
+    [...NOIVO_GROUPS.map(g => `noivo|${g.group}`), ...NOIVA_GROUPS.map(g => `noiva|${g.group}`)].forEach(k => knownKeys.add(k));
+
     list.forEach(r => {
       const key = `${r.side || "indefinido"}|${r.group || "indefinido"}`;
       (grouped[key] = grouped[key] || []).push(r);
     });
 
-    let html = "";
-    const seen = new Set();
+    let html = `<div class="rsvp-cols-grid">`;
+    html += renderCol("noivo", NOIVO_GROUPS, "Noivo", "rsvp-col-noivo", grouped);
+    html += renderCol("noiva", NOIVA_GROUPS, "Noiva", "rsvp-col-noiva", grouped);
+    html += `</div>`;
 
-    RSVP_GROUP_ORDER.forEach(({ side, group, label, cls }) => {
-      const key = `${side}|${group}`;
-      const entries = grouped[key];
-      if (!entries || !entries.length) return;
-      seen.add(key);
+    const unknown = Object.entries(grouped)
+      .filter(([k]) => !knownKeys.has(k))
+      .flatMap(([, v]) => v);
 
-      html += `<tr class="group-header ${cls}">
-        <td colspan="4">
-          <span class="group-label">${label}</span>
-          <span class="group-count">${entries.length} convidado${entries.length !== 1 ? "s" : ""}</span>
-        </td>
-      </tr>`;
-      html += entries.slice().reverse().map(rsvpRow).join("");
-    });
-
-    // Entries not covered by GROUP_ORDER (extra safety)
-    Object.entries(grouped).forEach(([key, entries]) => {
-      if (seen.has(key) || !entries.length) return;
-      html += `<tr class="group-header group-header-unknown">
-        <td colspan="4">
-          <span class="group-label">Outros</span>
-          <span class="group-count">${entries.length}</span>
-        </td>
-      </tr>`;
-      html += entries.slice().reverse().map(rsvpRow).join("");
-    });
+    if (unknown.length) {
+      html += `<div class="rsvp-unknown">
+        <div class="subgroup-label">Não Identificados<span>${unknown.length}</span></div>
+        ${unknown.slice().reverse().map(rsvpEntry).join("")}
+      </div>`;
+    }
 
     body.innerHTML = html;
   }
