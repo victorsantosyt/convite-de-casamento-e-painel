@@ -330,35 +330,36 @@
     .pill-gold   { background: #FFF3CD; color: #856404; }
 
     /* Two-column RSVP layout */
+    #rsvpBody { overflow: hidden; width: 100%; }
     .rsvp-cols-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0 28px;
-      padding: 8px 0;
+      gap: 0 24px;
+      width: 100%;
     }
-    .rsvp-col { min-width: 0; }
+    .rsvp-col { min-width: 0; overflow: hidden; }
     @media (max-width: 600px) {
-      .rsvp-cols-grid { grid-template-columns: 1fr; gap: 0; }
-      .rsvp-col + .rsvp-col { margin-top: 24px; }
+      .rsvp-cols-grid { grid-template-columns: 1fr; }
+      .rsvp-col + .rsvp-col { margin-top: 20px; }
     }
     .rsvp-col-title {
-      font-size: .75rem;
+      font-size: .73rem;
       font-weight: 800;
       letter-spacing: 1px;
       text-transform: uppercase;
-      padding: 12px 0 10px;
+      padding: 10px 0 8px;
       border-bottom: 2px solid;
       margin-bottom: 2px;
     }
     .rsvp-col-noivo .rsvp-col-title { color: #1a5276; border-color: #1a5276; }
     .rsvp-col-noiva .rsvp-col-title { color: #7b241c; border-color: #7b241c; }
     .subgroup-label {
-      font-size: .67rem;
+      font-size: .65rem;
       font-weight: 700;
       letter-spacing: .8px;
       text-transform: uppercase;
       color: var(--soft);
-      padding: 10px 0 5px;
+      padding: 8px 0 4px;
       display: flex;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
@@ -366,17 +367,18 @@
     .rsvp-entry {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 7px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: .82rem;
       gap: 6px;
-      min-width: 0;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .81rem;
+      width: 100%;
+      overflow: hidden;
     }
     .rsvp-entry:last-child { border-bottom: none; }
-    .rsvp-entry-name { font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-    .rsvp-entry-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .rsvp-unknown { margin-top: 20px; padding-top: 8px; border-top: 1px dashed var(--border); }
+    .rsvp-entry-name { font-weight: 600; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rsvp-entry-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .rsvp-entry .pill { padding: 2px 7px; font-size: .65rem; }
+    .rsvp-unknown { margin-top: 16px; padding-top: 8px; border-top: 1px dashed var(--border); }
 
     /* Delete button */
     .btn-del {
