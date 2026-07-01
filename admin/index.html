@@ -256,6 +256,100 @@
 
     .stat-card.green .stat-value { color: var(--green); }
     .stat-card.red   .stat-value { color: var(--red); }
+
+    /* ── Planejamento de Custo ─────────────── */
+    .planning-wrap { padding: 20px 24px 24px; }
+
+    .planning-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .planning-card {
+      background: var(--bg);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .planning-label {
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .9px;
+      text-transform: uppercase;
+      color: var(--soft);
+    }
+    .planning-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .planning-val.positive { color: var(--green); }
+    .planning-val.negative { color: var(--red); }
+
+    .menu-table { width: 100%; margin-bottom: 28px; }
+    .menu-header, .menu-row {
+      display: grid;
+      grid-template-columns: 1fr 110px 110px;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .menu-header { border-bottom: 2px solid var(--border); }
+    .menu-header span {
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--soft);
+    }
+    .menu-row:last-child { border-bottom: none; }
+    .menu-row-name { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .menu-donated { font-size: .72rem; font-weight: 700; color: var(--green); margin-left: 6px; }
+    .menu-input {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: .84rem;
+      font-family: 'Montserrat', sans-serif;
+      color: var(--text);
+      text-align: right;
+      width: 100%;
+      background: var(--white);
+      transition: border-color .15s;
+    }
+    .menu-input:focus { outline: none; border-color: var(--blue-mid); }
+    .menu-row-total { font-size: .85rem; font-weight: 700; color: var(--gold); text-align: right; }
+
+    .chart-section { margin-top: 4px; }
+    .chart-title {
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--soft);
+      margin-bottom: 14px;
+    }
+    .chart-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 90px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .chart-name { font-size: .78rem; font-weight: 600; color: var(--text); }
+    .chart-track { background: var(--bg); border-radius: 50px; height: 9px; overflow: hidden; }
+    .chart-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--navy), var(--blue-mid)); transition: width .4s; }
+    .chart-pct { font-size: .72rem; color: var(--soft); text-align: right; }
+    @media (max-width: 600px) {
+      .menu-header, .menu-row { grid-template-columns: 1fr 90px 90px; gap: 8px; }
+      .chart-row { grid-template-columns: 90px 1fr 70px; }
+    }
     .stat-card.gold  .stat-value { color: #9A6E0A; }
 
     /* ── Secoes ────────────────────────────── */
@@ -729,6 +823,49 @@
 
     </div>
 
+    <!-- Planejamento de Custo -->
+    <div class="section-block">
+      <div class="section-head">
+        <h2>Planejamento de Custo</h2>
+      </div>
+      <div class="planning-wrap">
+
+        <!-- Resumo -->
+        <div class="planning-summary">
+          <div class="planning-card">
+            <span class="planning-label">Confirmados</span>
+            <span class="planning-val" id="pGuests">0</span>
+          </div>
+          <div class="planning-card">
+            <span class="planning-label">Custo Estimado</span>
+            <span class="planning-val" id="pCost">R$ 0,00</span>
+          </div>
+          <div class="planning-card">
+            <span class="planning-label">PIX Arrecadado</span>
+            <span class="planning-val" id="pPix">R$ 0,00</span>
+          </div>
+          <div class="planning-card">
+            <span class="planning-label">Saldo</span>
+            <span class="planning-val" id="pBalance">R$ 0,00</span>
+          </div>
+        </div>
+
+        <!-- Tabela de cardápio -->
+        <div class="menu-table" id="menuTable">
+          <div class="menu-header">
+            <span>Item</span>
+            <span style="text-align:right">R$ / pessoa</span>
+            <span style="text-align:right">Total</span>
+          </div>
+          <!-- preenchido via JS -->
+        </div>
+
+        <!-- Gráfico -->
+        <div class="chart-section" id="costChart"></div>
+
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1042,10 +1179,10 @@
     badge.textContent = list.length;
     document.getElementById("sContribs").textContent = list.length;
 
-    const pixTotal = list
+    currentPixTotal = list
       .filter(c => c.type === "pix")
       .reduce((sum, c) => sum + parseBRL(c.amount), 0);
-    document.getElementById("sPixTotal").textContent = formatBRL(pixTotal);
+    document.getElementById("sPixTotal").textContent = formatBRL(currentPixTotal);
 
     if (!list.length) {
       body.innerHTML = "";
@@ -1107,9 +1244,108 @@
   document.getElementById("clearRsvpBtn").addEventListener("click", () => clearAll("rsvps"));
   document.getElementById("clearContribBtn").addEventListener("click", () => clearAll("contributions"));
 
+  // ── Planejamento de Custo ──────────────────
+  let currentPixTotal = 0;
+
+  const MENU_ITEMS = [
+    { id: "arroz",        label: "Arroz",        defaultCost: 3.50, donated: false },
+    { id: "churrasco",    label: "Churrasco",    defaultCost: 0,    donated: true  },
+    { id: "salada",       label: "Salada",       defaultCost: 4.00, donated: false },
+    { id: "pure",         label: "Purê",         defaultCost: 3.00, donated: false },
+    { id: "refrigerante", label: "Refrigerante", defaultCost: 4.00, donated: false },
+    { id: "suco",         label: "Suco",         defaultCost: 3.50, donated: false },
+  ];
+
+  function loadCosts() {
+    try { return JSON.parse(localStorage.getItem("wedding_costs") || "{}"); }
+    catch { return {}; }
+  }
+
+  function renderPlanning() {
+    const guests   = allRsvps.filter(r => r.status === "accepted").length;
+    const saved    = loadCosts();
+    const menuBody = document.getElementById("menuTable");
+
+    const rows = MENU_ITEMS.map(item => {
+      const cost  = saved[item.id] ?? item.defaultCost;
+      const total = item.donated ? 0 : cost * guests;
+      return `<div class="menu-row">
+        <span class="menu-row-name">${item.label}${item.donated ? ' <span class="menu-donated">✓ doado</span>' : ''}</span>
+        ${item.donated
+          ? `<span style="color:var(--green);font-size:.8rem;font-weight:700;text-align:right">—</span>`
+          : `<input class="menu-input" type="number" min="0" step="0.50" value="${cost.toFixed(2)}" data-id="${item.id}">`
+        }
+        <span class="menu-row-total" id="ptotal-${item.id}">${formatBRL(total)}</span>
+      </div>`;
+    }).join("");
+
+    // Keep header, replace rows only
+    const header = menuBody.querySelector(".menu-header");
+    menuBody.innerHTML = "";
+    if (header) menuBody.appendChild(header);
+    const tmp = document.createElement("div");
+    tmp.innerHTML = rows;
+    while (tmp.firstChild) menuBody.appendChild(tmp.firstChild);
+
+    menuBody.querySelectorAll(".menu-input").forEach(inp => {
+      inp.addEventListener("input", () => updatePlanning(guests));
+    });
+
+    updatePlanning(guests);
+  }
+
+  function updatePlanning(guests) {
+    const saved = {};
+    let grandTotal = 0;
+
+    MENU_ITEMS.forEach(item => {
+      if (item.donated) return;
+      const inp  = document.querySelector(`.menu-input[data-id="${item.id}"]`);
+      const cost = inp ? (parseFloat(inp.value) || 0) : 0;
+      const tot  = cost * guests;
+      saved[item.id] = cost;
+      grandTotal += tot;
+      const el = document.getElementById(`ptotal-${item.id}`);
+      if (el) el.textContent = formatBRL(tot);
+    });
+
+    try { localStorage.setItem("wedding_costs", JSON.stringify(saved)); } catch {}
+
+    const balance = currentPixTotal - grandTotal;
+
+    document.getElementById("pGuests").textContent  = guests;
+    document.getElementById("pCost").textContent    = formatBRL(grandTotal);
+    document.getElementById("pPix").textContent     = formatBRL(currentPixTotal);
+
+    const balEl = document.getElementById("pBalance");
+    balEl.textContent = (balance >= 0 ? "+ " : "- ") + formatBRL(Math.abs(balance));
+    balEl.className   = "planning-val " + (balance >= 0 ? "positive" : "negative");
+
+    renderCostChart(guests, grandTotal);
+  }
+
+  function renderCostChart(guests, grandTotal) {
+    const chart = document.getElementById("costChart");
+    const items = MENU_ITEMS.filter(i => !i.donated);
+    const rows  = items.map(item => {
+      const inp  = document.querySelector(`.menu-input[data-id="${item.id}"]`);
+      const cost = inp ? (parseFloat(inp.value) || 0) : 0;
+      const tot  = cost * guests;
+      const pct  = grandTotal > 0 ? (tot / grandTotal * 100) : 0;
+      return `<div class="chart-row">
+        <span class="chart-name">${item.label}</span>
+        <div class="chart-track"><div class="chart-fill" style="width:${pct.toFixed(1)}%"></div></div>
+        <span class="chart-pct">${pct.toFixed(0)}% · ${formatBRL(tot)}</span>
+      </div>`;
+    }).join("");
+
+    chart.innerHTML = `<p class="chart-title">Distribuição por item</p>${rows}`;
+  }
+
   // ── Render tudo ────────────────────────────
   async function renderAll() {
     await Promise.all([renderRSVP(), renderContribs()]);
+    renderPlanning();
   }
 </script>
 </body>
