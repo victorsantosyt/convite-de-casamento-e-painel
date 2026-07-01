@@ -185,8 +185,12 @@ async function submitRSVP(status) {
   if (acceptBtn)  acceptBtn.disabled  = true;
   if (declineBtn) declineBtn.disabled = true;
 
+  const guest = typeof findGuest === "function" ? findGuest(name) : null;
+  const side  = guest ? guest.side  : "indefinido";
+  const group = guest ? guest.group : "indefinido";
+
   try {
-    await apiPost(API.rsvps, { name, status });
+    await apiPost(API.rsvps, { name, status, side, group });
   } catch {
     toast("Não foi possível registrar agora. Verifique sua conexão e tente novamente.", "error");
     if (acceptBtn)  acceptBtn.disabled  = false;

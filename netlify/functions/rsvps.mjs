@@ -17,11 +17,15 @@ export default async (req) => {
       return json({ error: "invalid_json" }, 400);
     }
 
-    const name = String(payload?.name || "").trim().slice(0, 80);
+    const name   = String(payload?.name || "").trim().slice(0, 80);
     const status = payload?.status === "declined" ? "declined" : "accepted";
     if (!name) return json({ error: "name_required" }, 400);
 
-    const entry = { id: makeId(), name, status, ts: new Date().toISOString() };
+    const validSides = ["noivo", "noiva", "indefinido"];
+    const side  = validSides.includes(payload?.side) ? payload.side : "indefinido";
+    const group = String(payload?.group || "indefinido").slice(0, 40);
+
+    const entry = { id: makeId(), name, status, side, group, ts: new Date().toISOString() };
     await store.setJSON(entry.id, entry);
     return json({ ok: true, entry }, 201);
   }

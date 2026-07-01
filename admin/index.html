@@ -329,6 +329,28 @@
     .pill-blue   { background: #D0E9FF; color: #0C4A8A; }
     .pill-gold   { background: #FFF3CD; color: #856404; }
 
+    /* Group header rows */
+    .group-header td {
+      background: var(--bg);
+      padding: 8px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .group-header:hover td { background: var(--bg) !important; cursor: default; }
+    .group-label {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .9px;
+      text-transform: uppercase;
+    }
+    .group-count {
+      font-size: .72rem;
+      color: var(--soft);
+      margin-left: 8px;
+    }
+    .group-header-noivo .group-label  { color: #1a5276; }
+    .group-header-noiva .group-label  { color: #7b241c; }
+    .group-header-unknown .group-label { color: var(--soft); }
+
     /* Delete button */
     .btn-del {
       background: none;
@@ -822,6 +844,34 @@
   // ── Render RSVP ───────────────────────────
   let allRsvps = [];  // cache para busca local
 
+  const RSVP_GROUP_ORDER = [
+    { side: "noivo", group: "familia",    label: "Família do Noivo",                cls: "group-header-noivo" },
+    { side: "noivo", group: "pastores",   label: "Pastores do Noivo",               cls: "group-header-noivo" },
+    { side: "noivo", group: "padrinhos",  label: "Padrinhos e Madrinhas do Noivo",  cls: "group-header-noivo" },
+    { side: "noivo", group: "amigos",     label: "Amigos do Noivo",                 cls: "group-header-noivo" },
+    { side: "noivo", group: "convidados", label: "Convidados do Noivo",             cls: "group-header-noivo" },
+    { side: "noiva", group: "familia",    label: "Família da Noiva",                cls: "group-header-noiva" },
+    { side: "noiva", group: "pastores",   label: "Pastores da Noiva",               cls: "group-header-noiva" },
+    { side: "noiva", group: "padrinhos",  label: "Padrinhos e Madrinhas da Noiva",  cls: "group-header-noiva" },
+    { side: "noiva", group: "amigas",     label: "Amigas da Noiva",                 cls: "group-header-noiva" },
+    { side: "noiva", group: "convidados", label: "Convidados da Noiva",             cls: "group-header-noiva" },
+    { side: "indefinido", group: "indefinido", label: "Não Identificados",          cls: "group-header-unknown" },
+  ];
+
+  function rsvpRow(r) {
+    const pill = r.status === "accepted"
+      ? '<span class="pill pill-green">Confirmado</span>'
+      : '<span class="pill pill-red">Recusou</span>';
+    return `<tr>
+      <td><strong>${esc(r.name)}</strong></td>
+      <td>${pill}</td>
+      <td style="font-size:.8rem;color:var(--soft)">${fmtDate(r.ts)}</td>
+      <td>
+        <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
+      </td>
+    </tr>`;
+  }
+
   function renderRsvpRows(list) {
     const body  = document.getElementById("rsvpBody");
     const empty = document.getElementById("rsvpEmpty");
@@ -833,20 +883,45 @@
     }
 
     empty.style.display = "none";
-    body.innerHTML = list.slice().reverse().map((r) => {
-      const pill = r.status === "accepted"
-        ? '<span class="pill pill-green">Confirmado</span>'
-        : '<span class="pill pill-red">Recusou</span>';
 
-      return `<tr>
-        <td><strong>${esc(r.name)}</strong></td>
-        <td>${pill}</td>
-        <td style="font-size:.8rem;color:var(--soft)">${fmtDate(r.ts)}</td>
-        <td>
-          <button class="btn-del" title="Remover" onclick="removeRSVP('${esc(r.id)}')"><i class="ph ph-trash"></i></button>
+    // Group entries by side|group key
+    const grouped = {};
+    list.forEach(r => {
+      const key = `${r.side || "indefinido"}|${r.group || "indefinido"}`;
+      (grouped[key] = grouped[key] || []).push(r);
+    });
+
+    let html = "";
+    const seen = new Set();
+
+    RSVP_GROUP_ORDER.forEach(({ side, group, label, cls }) => {
+      const key = `${side}|${group}`;
+      const entries = grouped[key];
+      if (!entries || !entries.length) return;
+      seen.add(key);
+
+      html += `<tr class="group-header ${cls}">
+        <td colspan="4">
+          <span class="group-label">${label}</span>
+          <span class="group-count">${entries.length} convidado${entries.length !== 1 ? "s" : ""}</span>
         </td>
       </tr>`;
-    }).join("");
+      html += entries.slice().reverse().map(rsvpRow).join("");
+    });
+
+    // Entries not covered by GROUP_ORDER (extra safety)
+    Object.entries(grouped).forEach(([key, entries]) => {
+      if (seen.has(key) || !entries.length) return;
+      html += `<tr class="group-header group-header-unknown">
+        <td colspan="4">
+          <span class="group-label">Outros</span>
+          <span class="group-count">${entries.length}</span>
+        </td>
+      </tr>`;
+      html += entries.slice().reverse().map(rsvpRow).join("");
+    });
+
+    body.innerHTML = html;
   }
 
   function applyRsvpSearch() {
